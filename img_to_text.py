@@ -69,8 +69,7 @@ def scale_value_0(value, old_max, new_max):
     return scale_value(value, 0, old_max, 0, new_max)
 
 
-
-def create_docx(extracted_texts, output_docx_path):
+def get_all_text_with_formatting(extracted_texts, document_width, document_height):
     width = height = -1
 
     for extracted_text in extracted_texts:
@@ -80,21 +79,10 @@ def create_docx(extracted_texts, output_docx_path):
 
     if width < 0 or height < 0:
         raise Exception(f"Width or Height < 0: w:{width} h:{height}")
-    
-    document = Document()
-
-    # - 1 in margins: Courier New, size 11, 45 Lines, 70 Characters across.
-    # - .5 in margins: Courier New, size 11, 57 Lines, 81 characters across.
-    # - .1 in margins: Courier New, size 11, 62 Lines, 90 characters across.
-    # - .1 in margins, Consolas, size 10, 66 lines, 108 characters across.
-    document_width = 108
-    document_height = 66
 
     words = {}
     blocks = {}
     line_count_by_paragraph = {}
-
-    line_count = 0
 
     for t in extracted_texts:
         if t.level == 4:
@@ -123,7 +111,8 @@ def create_docx(extracted_texts, output_docx_path):
 
                 lines_so_far = sum(line_count_by_paragraph[(t.block_num, p)] for p in range(1, t.par_num)) + t.line_num
                 
-                loc = (blocks[t.block_num]["line_start"] + lines_so_far - 1, row)
+                # keeps word positions accurate to where they are in the original
+                loc = (blocks[t.block_num]["line_start"] + lines_so_far - 1, row) 
 
                 if not loc in words or confidence > words[loc]["confidence"]:
                     words[loc] = {
@@ -151,7 +140,53 @@ def create_docx(extracted_texts, output_docx_path):
 
         all_text.append('\n')
 
-    # print(''.join(all_text))
+    return all_text
+
+
+def get_all_text_in_block_order(extracted_texts):
+    blocks = {} # block : paragraph : line : words
+    block_locs = {} # block : top
+    
+    for t in extracted_texts:
+        if t.level == 2:
+            blocks[t.block_num] = {}
+            block_locs[t.block_num] = (t.top, t.left)
+
+        if t.level == 3:
+            blocks[t.block_num][t.par_num] = {}
+
+        if t.level == 4:
+            blocks[t.block_num][t.par_num][t.line_num] = []
+        
+        if t.level == 5:
+            if t.text and not t.text.isspace():
+                blocks[t.block_num][t.par_num][t.line_num].append(t.text)
+
+
+    all_text = []
+    for b in sorted(blocks, key=lambda bn: block_locs[bn]):
+        all_text.append('\n')
+        for p in sorted(blocks[b]):
+            for l in sorted(blocks[b][p]):
+                line = ' '.join(blocks[b][p][l])
+                if line:
+                    all_text.extend(line)
+                    all_text.append('\n')
+
+    return ''.join(all_text)
+
+
+def create_docx(image_file, extracted_texts, output_docx_path, prioritize_block_order_over_formatting=False):
+    document = Document()
+
+    # - 1 in margins: Courier New, size 11, 45 Lines, 70 Characters across.
+    # - .5 in margins: Courier New, size 11, 57 Lines, 81 characters across.
+    # - .1 in margins: Courier New, size 11, 62 Lines, 90 characters across.
+    # - .1 in margins, Consolas, size 10, 66 lines, 108 characters across.
+    document_width = 108
+    document_height = 66
+
+    all_text = get_all_text_in_block_order(extracted_texts) if prioritize_block_order_over_formatting else get_all_text_with_formatting(extracted_texts, document_width, document_height)
 
     paragraph = document.add_paragraph()
     paragraph.add_run(''.join(all_text))
@@ -160,16 +195,16 @@ def create_docx(extracted_texts, output_docx_path):
     # Set page margins to 0.1 inch (0.1 inches = 0.144 points)
     sections = document.sections
     for section in sections:
-        section.left_margin = Inches(0.1)
-        section.right_margin = Inches(0.1)
-        section.top_margin = Inches(0.1)
-        section.bottom_margin = Inches(0.1)
+        section.left_margin = Inches(1)
+        section.right_margin = Inches(1)
+        section.top_margin = Inches(1)
+        section.bottom_margin = Inches(1)
 
     # Set the font and size for the entire document (Courier New, 11pt)
     for paragraph in document.paragraphs:
         for run in paragraph.runs:
             run.font.name = 'Consolas'
-            run.font.size = Pt(10)
+            run.font.size = Pt(11)
 
     # Set the line spacing to single (Pt(12) corresponds to 12-pt line spacing)
     for paragraph in document.paragraphs:
@@ -181,8 +216,8 @@ def create_docx(extracted_texts, output_docx_path):
     document.save(output_docx_path)
 
 
-def convert_image_to_docx(image_file, output_file):
-    create_docx(get_extracted_texts(image_file), output_file)
+def convert_image_to_docx(image_file, output_file, prioritize_block_order_over_formatting=False):
+    create_docx(image_file, get_extracted_texts(image_file), output_file, prioritize_block_order_over_formatting)
 
 
 
@@ -231,7 +266,10 @@ def get_text_old(img_file):
 
 if __name__ == '__main__':
     # Example usage
-    image_path = 'image_dir_test/Alford-Vol-1-Part-1-182.png'
+    # image_path = 'image_dir_test/Alford-Vol-1-Part-1-182.png'
+    # image_path = 'image_dir_test/91f5e770-7fd7-43e6-997f-45d1a97b67fb-032.png'
+    # image_path = 'image_dir_test/91f5e770-7fd7-43e6-997f-45d1a97b67fb-460.png'
+    image_path = 'output/pdf_images/Vol 1 Part 1/Alford-Vol-1-Part-1-068.png'
     output_path = 'output/test/test.docx'
 
-    convert_image_to_docx(image_path, output_path)
+    convert_image_to_docx(image_path, output_path, prioritize_block_order_over_formatting=True)

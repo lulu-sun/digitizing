@@ -2,7 +2,7 @@ from pdf2image import convert_from_path
 import os
 from img_to_text import convert_image_to_docx
 
-GENERATE_IMAGES = True
+GENERATE_IMAGES = False
 RUN = 3
 
 parts = [
@@ -14,6 +14,8 @@ parts = [
 
 image_dir = f'output/pdf_images/{parts[RUN]}'  # Replace with the path to your image directory
 extract_dir = f'output/extracted_texts/{parts[RUN]}'
+
+print(parts[RUN])
 
 os.makedirs(image_dir, exist_ok=True)
 os.makedirs(extract_dir, exist_ok=True)
@@ -57,7 +59,7 @@ for i, image in enumerate(images):
         continue
 
     # Use pytesseract to extract text from the image
-    convert_image_to_docx(image, output_file)  
+    convert_image_to_docx(image, output_file, prioritize_block_order_over_formatting=True)  
 
     # Print progress updates
     print(f"{i + 1}/{len(images)} Extracted text from page")
