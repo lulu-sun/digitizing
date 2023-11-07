@@ -12,8 +12,8 @@ parts = [
     "Vol 2 Part 2",
 ]
 
-image_dir = f'output/pdf_images/{parts[RUN]}'  # Replace with the path to your image directory
-extract_dir = f'output/extracted_texts/{parts[RUN]}'
+image_dir = f'extraction/output/pdf_images/{parts[RUN]}'  # Replace with the path to your image directory
+extract_dir = f'extraction/output/extracted_texts/{parts[RUN]}'
 
 print(parts[RUN])
 
@@ -22,10 +22,10 @@ os.makedirs(extract_dir, exist_ok=True)
 
 # Path to the PDF file you want to extract text from
 pdf_files = [
-    'pdfs/Vol.I, Part I—New Testament for English Readers, Rivingtons 1868 - Alford.pdf',
-    'pdfs/Vol.I, Part II—New Testament for English Readers, Rivingtons 1872 - Alford.pdf',
-    'pdfs/Vol.II, Part I—New Testament for English Readers, Rivingtons 1872 - Alford.pdf',
-    'pdfs/Vol.II, Part II—New Testament for English Readers, Rivingtons 1872 - Alford.pdf'
+    'extraction/pdfs/Vol.I, Part I—New Testament for English Readers, Rivingtons 1868 - Alford.pdf',
+    'extraction/pdfs/Vol.I, Part II—New Testament for English Readers, Rivingtons 1872 - Alford.pdf',
+    'extraction/pdfs/Vol.II, Part I—New Testament for English Readers, Rivingtons 1872 - Alford.pdf',
+    'extraction/pdfs/Vol.II, Part II—New Testament for English Readers, Rivingtons 1872 - Alford.pdf'
 ]
 
 pdf_file = pdf_files[RUN]

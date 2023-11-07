@@ -266,10 +266,10 @@ def get_text_old(img_file):
 
 if __name__ == '__main__':
     # Example usage
-    # image_path = 'image_dir_test/Alford-Vol-1-Part-1-182.png'
-    # image_path = 'image_dir_test/91f5e770-7fd7-43e6-997f-45d1a97b67fb-032.png'
-    # image_path = 'image_dir_test/91f5e770-7fd7-43e6-997f-45d1a97b67fb-460.png'
-    image_path = 'output/pdf_images/Vol 1 Part 1/Alford-Vol-1-Part-1-068.png'
-    output_path = 'output/test/test.docx'
+    # image_path = 'extraction/image_dir_test/Alford-Vol-1-Part-1-182.png'
+    # image_path = 'extraction/image_dir_test/91f5e770-7fd7-43e6-997f-45d1a97b67fb-032.png'
+    # image_path = 'extraction/image_dir_test/91f5e770-7fd7-43e6-997f-45d1a97b67fb-460.png'
+    image_path = 'extraction/output/pdf_images/Vol 1 Part 1/Alford-Vol-1-Part-1-068.png'
+    output_path = 'extraction/output/test/test.docx'
 
     convert_image_to_docx(image_path, output_path, prioritize_block_order_over_formatting=True)

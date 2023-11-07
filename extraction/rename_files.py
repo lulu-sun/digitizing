@@ -1,6 +1,6 @@
 import os
 
-folder = "output/pdf_images/Vol 2 Part 2"
+folder = "extraction/output/pdf_images/Vol 2 Part 2"
 find = "5e0b1c7e-aad4-42b6-bc76-c75bc41094f1"
 replace = "Alford-Vol-2-Part-2"
 
