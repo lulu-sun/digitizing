@@ -51,10 +51,16 @@ def convert_docx_to_html():
             formatted_html = []
 
             doc = docx.Document(docx_file_path)
-            for paragraph in doc.paragraphs:
+
+            # if volume == 1 and part == 2 and  page_number == 68:
+            #     input([doc.paragraphs[0].runs[0]])
+
+            for i, paragraph in enumerate(doc.paragraphs):
                 for run in paragraph.runs:
                     formatted_html.append(run_to_html(run))
 
+                if i == 0: # at the top of the document, if there is just one empty line, that still counts as two newlines.
+                    formatted_html.append('\n')
                 formatted_html.append('\n')
 
             formatted_html = ''.join(formatted_html)
@@ -66,7 +72,6 @@ def convert_docx_to_html():
             formatted_html = re.sub(r'</b><b>', '', formatted_html)
             formatted_html = re.sub(r'</i><i>', '', formatted_html)
             formatted_html = re.sub(r'</u><u>', '', formatted_html)
-            formatted_html = re.sub(r'—', '-', formatted_html)
             
             output_file_path = f'{output_dir}/html/Vol {volume} Part {part}/{page_number}.html'
             os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
@@ -84,23 +89,27 @@ def convert_html_to_verses():
             with open(html_file_path) as f:
                 text.append(f.read())
 
-
     text = ' '.join(text)
 
-    pattern = r'(\[(?:CHAP.*?|\d+|\d+-\d+|.*?)..*?\])'
+    # input(text)
+
+    pattern = r'<br><br>(?:<.+?>)+([^<]*?(?:<(?!br>)[^<]*)*)\]'
     result = re.split(pattern, text)
+
+    # print(result)
+    # input()
 
     output_text = []
 
-    for block in result:
-        if block.startswith('['):
+    for i, block in enumerate(result):
+        if i % 2 == 1:
             if "CHAP" in block:
                 h = 1
             elif re.search(r'\d+.', block):
                 h = 2
             else:
                 h = 3
-            output_text.append(f'<h{h}>{block}</h{h}>')
+            output_text.append(f'<h{h}><u>{block}</u></h{h}>')
         else:
             output_text.append(block)
 
