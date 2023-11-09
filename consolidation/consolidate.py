@@ -42,7 +42,15 @@ def download_docx(volume, part, page):
     download_docx_from_drive(file_id, file_path)
 
 
+def get_progress(df=None):
+    if not df:
+        df = get_page_assignments_as_df()
+    
+    return (df == "TRUE").sum().sum()
+
+
 def convert_docx_to_html(redownload_docx=False):
+    global PROGRESS
     # remove html output files
     html_output_folder = f'{output_dir}/html'
     if os.path.exists(html_output_folder):
@@ -56,7 +64,7 @@ def convert_docx_to_html(redownload_docx=False):
     df = get_page_assignments_as_df()
     # df = pd.read_excel(xlsx_file)
     # print(df)
-    completed_count = (df == "TRUE").sum().sum()
+    completed_count = get_progress(df)
     current = 0
 
     for volume, part in [(1,1),(1,2),(2,1),(2,2)]:
@@ -144,6 +152,9 @@ def convert_html_to_verses():
     current_datetime = datetime.now()
     formatted_datetime = current_datetime.strftime("%B %d, %Y at %I:%M%p")
     all_text.append(f"<h3>This file was generated on {formatted_datetime}</h3>")
+
+    completed_count = get_progress()
+    all_text.append(f"<h3>PROGRESS: {completed_count}/1941 = {round(100 * completed_count / 1941)}%</h3>")
 
     for book in new_testament_books:
         volume, part, first_page, last_page = page_starts[book]
