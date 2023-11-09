@@ -6,6 +6,7 @@
 
 from page_numbers import page_starts, new_testament_books, links
 from google_cloud import get_page_assignments_as_df, download_docx_from_drive
+from datetime import datetime
 import pandas as pd
 import docx
 import re
@@ -135,6 +136,10 @@ def process_html(html_text):
 def convert_html_to_verses():
     all_text = []
 
+    current_datetime = datetime.now()
+    formatted_datetime = current_datetime.strftime("%B %d, %Y at %I:%M%p")
+    all_text.append(f"<h3>This file was generated on {formatted_datetime}</h3>")
+
     for book in new_testament_books:
         volume, part, first_page, last_page = page_starts[book]
 
@@ -176,5 +181,5 @@ def convert_html_to_verses():
     
 
 if __name__ == '__main__':
-    convert_docx_to_html(redownload_docx=True)
+    convert_docx_to_html(redownload_docx=False)
     convert_html_to_verses()
