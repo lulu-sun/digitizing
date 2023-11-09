@@ -49,13 +49,15 @@ def convert_docx_to_html(redownload_docx=False):
         shutil.rmtree(html_output_folder)
 
     # remove input folder if redownloding.
-    if redownload_docx:
+    if redownload_docx and os.path.exists(input_dir):
         shutil.rmtree(input_dir)
 
     # Read the Excel file into a DataFrame
     df = get_page_assignments_as_df()
     # df = pd.read_excel(xlsx_file)
     # print(df)
+    completed_count = (df == "TRUE").sum().sum()
+    current = 0
 
     for volume, part in [(1,1),(1,2),(2,1),(2,2)]:
         starting_column = ((volume - 1) * 8 + (part - 1) * 4)
@@ -66,13 +68,14 @@ def convert_docx_to_html(redownload_docx=False):
         dfvp_completed = dfvp[condition]
 
         for index, row in dfvp_completed.iterrows():
+            current += 1
             file_name = row[starting_column]            
             page_number = int(re.search(r'\d+', file_name).group(0))
             editor = row[starting_column + 1]
             completed = row[starting_column + 2]
             docx_file_path = get_file_path(volume, part, file_name)
             
-            print(f"{index + 1}/{len(dfvp_completed)} Volume {volume} Part {part}", page_number, editor, completed, docx_file_path)
+            print(f"{current}/{completed_count} Volume {volume} Part {part}", page_number, editor, completed, docx_file_path)
 
             formatted_html = []
 
@@ -113,12 +116,13 @@ def convert_docx_to_html(redownload_docx=False):
 
 
 def process_html(html_text):
-    pattern = r'<br><br>(?:<[^>]+>)+([^<\]]*?(?:<(?!br>)[^<\]]*)*\])'
+    pattern = r'<br><br>([^<>\[\]]*(?:(?!<br>|\[|\]).)*)\]'
     result = re.split(pattern, html_text)
 
     output_text = []
 
     for i, block in enumerate(result):
+        # block = re.sub(r'<.*>', str(block))
         if i % 2 == 1:
             if "CHAP" in block:
                 h = 1
@@ -134,6 +138,7 @@ def process_html(html_text):
 
 
 def convert_html_to_verses():
+    print("Processing html files...")
     all_text = []
 
     current_datetime = datetime.now()
@@ -174,12 +179,16 @@ def convert_html_to_verses():
 
     final_text = '<br>'.join(all_text)
 
+    print("Writing final output...")
+
     with open(f'{output_dir}/test.html', 'w') as f:
         f.write(''.join(final_text))
+
+    print("Done.")
 
     return final_text
     
 
 if __name__ == '__main__':
-    convert_docx_to_html(redownload_docx=False)
+    # convert_docx_to_html(redownload_docx=True)
     convert_html_to_verses()
