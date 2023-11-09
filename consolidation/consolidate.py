@@ -18,8 +18,8 @@ output_dir = f"{working_dir}/output"
 
 xlsx_file = f'{input_dir}/Page Assignments.xlsx'
 
-def get_file_path(volume, part, page_number):
-    return f"{input_dir}/extracted_texts/Vol {volume} Part {part}/extracted_text-{page_number}.docx"
+def get_file_path(volume, part, file_name):
+    return f"{input_dir}/extracted_texts/Vol {volume} Part {part}/{file_name}"
 
 def run_to_html(run):
     html = run.text
@@ -42,10 +42,12 @@ def download_docx(volume, part, page):
 
 
 def convert_docx_to_html(redownload_docx=False):
+    # remove html output files
     html_output_folder = f'{output_dir}/html'
     if os.path.exists(html_output_folder):
         shutil.rmtree(html_output_folder)
 
+    # remove input folder if redownloding.
     if redownload_docx:
         shutil.rmtree(input_dir)
 
@@ -63,17 +65,22 @@ def convert_docx_to_html(redownload_docx=False):
         dfvp_completed = dfvp[condition]
 
         for index, row in dfvp_completed.iterrows():
-            page_number = int(row[starting_column])
+            file_name = row[starting_column]            
+            page_number = int(re.search(r'\d+', file_name).group(0))
             editor = row[starting_column + 1]
             completed = row[starting_column + 2]
-            docx_file_path = get_file_path(volume, part, page_number)
+            docx_file_path = get_file_path(volume, part, file_name)
             
-            print(f"Volume {volume} Part {part}", page_number, editor, completed, docx_file_path)
+            print(f"{index + 1}/{len(dfvp_completed)} Volume {volume} Part {part}", page_number, editor, completed, docx_file_path)
 
             formatted_html = []
 
             if redownload_docx:
                 download_docx(volume, part, page_number)
+
+            if not os.path.exists(docx_file_path):
+                print("File not found. You may need to redownload. Skipping.")
+                continue
             doc = docx.Document(docx_file_path)
 
             # if volume == 1 and part == 2 and  page_number == 68:
@@ -105,7 +112,7 @@ def convert_docx_to_html(redownload_docx=False):
 
 
 def process_html(html_text):
-    pattern = r'<br><br>(?:<.+?>)+([^<]*?(?:<(?!br>)[^<]*)*\])'
+    pattern = r'<br><br>(?:<[^>]+>)+([^<\]]*?(?:<(?!br>)[^<\]]*)*\])'
     result = re.split(pattern, html_text)
 
     output_text = []
@@ -169,5 +176,5 @@ def convert_html_to_verses():
     
 
 if __name__ == '__main__':
-    convert_docx_to_html()
+    convert_docx_to_html(redownload_docx=True)
     convert_html_to_verses()
