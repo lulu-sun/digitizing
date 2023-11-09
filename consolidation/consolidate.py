@@ -154,7 +154,7 @@ def convert_html_to_verses():
     all_text.append(f"<h3>This file was generated on {formatted_datetime}</h3>")
 
     completed_count = get_progress()
-    all_text.append(f"<h3>PROGRESS: {completed_count}/1941 = {round(100 * completed_count / 1941)}%</h3>")
+    all_text.append(f"<h3>PROGRESS: {completed_count}/1941 = {round(100 * completed_count / 1941, 2)}%</h3>")
 
     for book in new_testament_books:
         volume, part, first_page, last_page = page_starts[book]
