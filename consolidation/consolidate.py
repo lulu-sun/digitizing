@@ -42,8 +42,8 @@ def download_docx(volume, part, page):
     download_docx_from_drive(file_id, file_path)
 
 
-def get_progress(df=None):
-    if not df:
+def get_progress(df=pd.DataFrame()):
+    if df.empty:
         df = get_page_assignments_as_df()
     
     return (df == "TRUE").sum().sum()
@@ -124,7 +124,7 @@ def convert_docx_to_html(redownload_docx=False):
 
 
 def process_html(html_text):
-    pattern = r'<br><br>([^<>\[\]]*(?:(?!<br>|\[|\]).)*)\]'
+    pattern = r'<br><br>([^<>\[\]]*(?:(?!<br>|\[|\]).)*\])'
     result = re.split(pattern, html_text)
 
     output_text = []
