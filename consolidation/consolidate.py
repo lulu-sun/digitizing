@@ -201,5 +201,5 @@ def convert_html_to_verses():
     
 
 if __name__ == '__main__':
-    # convert_docx_to_html(redownload_docx=True)
+    convert_docx_to_html(redownload_docx=True)
     convert_html_to_verses()
