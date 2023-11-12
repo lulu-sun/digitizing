@@ -48,6 +48,41 @@ def get_progress(df=pd.DataFrame()):
     
     return (df == "TRUE").sum().sum()
 
+def get_detailed_progress():
+    df = get_page_assignments_as_df()
+
+    counts = {}
+
+    for volume, part in [(1,1),(1,2),(2,1),(2,2)]:
+        starting_column = ((volume - 1) * 8 + (part - 1) * 4)
+        dfvp = df.iloc[1:, starting_column:starting_column+3]
+
+        condition = dfvp.iloc[:, 2] == "TRUE"
+
+        dfvp_completed = dfvp[condition]
+
+        for index, row in dfvp_completed.iterrows():
+            file_name = row[starting_column]            
+            page_number = int(re.search(r'\d+', file_name).group(0))
+            editor = row[starting_column + 1]
+            completed = row[starting_column + 2]
+            docx_file_path = get_file_path(volume, part, file_name)
+
+            if editor not in counts:
+                counts[editor] = 1
+            else:
+                counts[editor] += 1
+
+    print("---DETAILED SUMMARY---")
+    print(f"{len(counts)} contributors completed {sum(counts.values())} revisions! {round(sum(counts.values()) * 100 / 1941, 2)}%")
+
+    for editor, count in sorted(counts.items(), key=lambda pair: -pair[1]):
+        print(editor, count)
+
+    return counts
+            
+        
+
 
 def convert_docx_to_html(redownload_docx=False):
     global PROGRESS
@@ -203,3 +238,4 @@ def convert_html_to_verses():
 if __name__ == '__main__':
     convert_docx_to_html(redownload_docx=True)
     convert_html_to_verses()
+    get_detailed_progress()
