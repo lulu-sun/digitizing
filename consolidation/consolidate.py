@@ -81,8 +81,34 @@ def get_detailed_progress():
 
     return counts
             
-        
 
+def format_text(text):
+    text = text.rstrip() # Remove any trailing whitespace.
+
+    subs = [
+        (r'\n\n\n\n', '\n\n'), # Limit newlines to two.
+        (r'\n\n\n', '\n\n'), # Limit newlines to two.
+        (r'\n\n', '<br><br>'), # Convert empty lines to br tags.
+        (r'\s+', ' '), # Convert all other remaining continuous whitespace to a single space.
+        (r'</b><b>', ''), # Remove shortened bold tags
+        (r'</i><i>', ''), # Remove shortened italics tags
+        (r'</u><u>', ''), # Remove shortened underline tags 
+
+        # Periods
+        # (r'[^\.]\.[^\.]', '\. '), # Add space after every period.
+        # (r' \.[^\.]', '\.'), # Remove previous space for every period.
+        # (r'\s+', ' '), # Convert all other remaining continuous whitespace to a single space.
+
+        # Question Marks  
+        # (r'\?', '\? '), # Add space after.
+        # (r' \?', '\?'), # Remove previous space.
+        # (r'\s+', ' '), # Convert all other remaining continuous whitespace to a single space.
+    ]
+
+    for find, replace in subs:
+        text = re.sub(find, replace, text)
+
+    return text
 
 def convert_docx_to_html(redownload_docx=False):
     global PROGRESS
@@ -142,14 +168,7 @@ def convert_docx_to_html(redownload_docx=False):
                 formatted_html.append('\n')
 
             formatted_html = ''.join(formatted_html)
-            formatted_html = formatted_html.rstrip()
-            formatted_html = re.sub(r'\n\n\n\n', '\n\n', formatted_html)
-            formatted_html = re.sub(r'\n\n\n', '\n\n', formatted_html)
-            formatted_html = re.sub(r'\n\n', '<br><br>', formatted_html)
-            formatted_html = re.sub(r'\s+', ' ', formatted_html)
-            formatted_html = re.sub(r'</b><b>', '', formatted_html)
-            formatted_html = re.sub(r'</i><i>', '', formatted_html)
-            formatted_html = re.sub(r'</u><u>', '', formatted_html)
+            formatted_html = format_text(formatted_html)
             
             output_file_path = f'{output_dir}/html/Vol {volume} Part {part}/{page_number}.html'
 
