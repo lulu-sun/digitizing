@@ -6,6 +6,7 @@
 
 from page_numbers import page_starts, new_testament_books, links
 from google_cloud import get_page_assignments_as_df, download_docx_from_drive
+from space_normalization import normalize_spacing
 from datetime import datetime
 import pandas as pd
 import docx
@@ -196,7 +197,10 @@ def process_html(html_text):
         else:
             output_text.append(block)
 
-    return ''.join(output_text)
+    output_text = ''.join(output_text)
+    output_text = normalize_spacing(output_text)
+
+    return output_text
 
 
 def convert_html_to_verses():
