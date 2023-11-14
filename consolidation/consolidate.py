@@ -179,7 +179,7 @@ def convert_docx_to_html(redownload_docx=False):
 
 
 def process_html(html_text):
-    pattern = r'<br><br>([^<>\[\]]*(?:(?!<br>|\[|\]).)*\])'
+    pattern = r'<br><br>([^<>]*(?:(?!<br>|\[.*\]).)*?\])'
     result = re.split(pattern, html_text)
 
     output_text = []
