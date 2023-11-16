@@ -106,6 +106,15 @@ def normalize_spacing(text):
     # Force dashes between number to be en dashes with no space.
     all_text = re.sub(r'(\d+) [\-–—] (\d+)', r'\1–\2', all_text)
 
+    # Control spacing for special cases: i.e. e.g. A.V.
+    # all_text = re.sub(r'i\. e\.', 'i.e.', all_text)
+    # all_text = re.sub(r'e\. g\.', 'e.g.', all_text)
+    # all_text = re.sub(r'A\. V\.', 'A.V.', all_text)
+    # all_text = re.sub(r'E\. V\.', 'E.V.', all_text)
+    # all_text = re.sub(r'N\. T\.', 'N.T.', all_text)
+    # all_text = re.sub(r'O\. T\.', 'O.T.', all_text)
+    all_text = re.sub(r' (\d)\. (\d)\.', r' \1\.\2\.', all_text)
+
     return all_text
 
 if __name__ == '__main__':

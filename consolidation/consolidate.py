@@ -75,7 +75,7 @@ def get_detailed_progress():
                 counts[editor] += 1
 
     print("---DETAILED SUMMARY---")
-    print(f"{len(counts)} contributors completed {sum(counts.values())} revisions! {round(sum(counts.values()) * 100 / 1941, 2)}%")
+    print(f"{len(counts)} contributors completed {sum(counts.values())} revisions! {1941 - sum(counts.values())} left. {round(sum(counts.values()) * 100 / 1941, 2)}%")
 
     for editor, count in sorted(counts.items(), key=lambda pair: -pair[1]):
         print(editor, count)
