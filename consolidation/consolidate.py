@@ -111,14 +111,8 @@ def format_text(text):
 
     return text
 
-def convert_docx_to_html(redownload_docx=False):
-    global PROGRESS
-    # remove html output files
-    html_output_folder = f'{output_dir}/html'
-    if os.path.exists(html_output_folder):
-        shutil.rmtree(html_output_folder)
-
-    # remove input folder if redownloding.
+def get_all_runs_from_docx(redownload_docx=False):
+     # remove input folder if redownloding.
     if redownload_docx and os.path.exists(input_dir):
         shutil.rmtree(input_dir)
 
@@ -128,6 +122,8 @@ def convert_docx_to_html(redownload_docx=False):
     # print(df)
     completed_count = get_progress(df)
     current = 0
+
+    runs = {} # key: (volume, part, page)
 
     for volume, part in [(1,1),(1,2),(2,1),(2,2)]:
         starting_column = ((volume - 1) * 8 + (part - 1) * 4)
@@ -147,8 +143,6 @@ def convert_docx_to_html(redownload_docx=False):
             
             print(f"{current}/{completed_count} Volume {volume} Part {part}", page_number, editor, completed, docx_file_path)
 
-            formatted_html = []
-
             if redownload_docx:
                 download_docx(volume, part, page_number)
 
@@ -157,25 +151,42 @@ def convert_docx_to_html(redownload_docx=False):
                 continue
             doc = docx.Document(docx_file_path)
 
-            # if volume == 1 and part == 2 and  page_number == 68:
-            #     input([doc.paragraphs[0].runs[0]])
+            if not (volume, part, page_number) in runs:
+                runs[(volume, part, page_number)] = []
 
             for i, paragraph in enumerate(doc.paragraphs):
                 for run in paragraph.runs:
-                    formatted_html.append(run_to_html(run))
+                    runs[(volume, part, page_number)].append(run)
+    
+    return runs
 
-                if i == 0: # at the top of the document, if there is just one empty line, that still counts as two newlines.
-                    formatted_html.append('\n')
+
+def convert_docx_to_html(redownload_docx=False):
+    # remove html output files
+    html_output_folder = f'{output_dir}/html'
+    if os.path.exists(html_output_folder):
+        shutil.rmtree(html_output_folder)
+
+    runs = get_all_runs_from_docx(redownload_docx)
+
+    for volume, part, page in runs.keys():
+        formatted_html = []
+        
+        for i, run in enumerate(runs[(volume, part, page)]):
+            formatted_html.append(run_to_html(run))
+
+            if i == 0: # at the top of the document, if there is just one empty line, that still counts as two newlines.
                 formatted_html.append('\n')
+            formatted_html.append('\n')
 
-            formatted_html = ''.join(formatted_html)
-            formatted_html = format_text(formatted_html)
-            
-            output_file_path = f'{output_dir}/html/Vol {volume} Part {part}/{page_number}.html'
+        formatted_html = ''.join(formatted_html)
+        formatted_html = format_text(formatted_html)
+        
+        output_file_path = f'{output_dir}/html/Vol {volume} Part {part}/{page}.html'
 
-            os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
-            with open(output_file_path, 'w') as f:
-                f.write(formatted_html)
+        os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
+        with open(output_file_path, 'w') as f:
+            f.write(formatted_html)
 
 
 def process_html(html_text):
@@ -250,7 +261,7 @@ def convert_html_to_verses():
 
     print("Writing final output...")
 
-    with open(f'{output_dir}/test.html', 'w') as f:
+    with open(f'{output_dir}/alford.html', 'w') as f:
         f.write(''.join(final_text))
 
     print("Done.")
@@ -259,6 +270,10 @@ def convert_html_to_verses():
     
 
 if __name__ == '__main__':
-    convert_docx_to_html(redownload_docx=True)
+    convert_docx_to_html(redownload_docx=False)
     convert_html_to_verses()
     get_detailed_progress()
+
+    # runs = get_all_runs_from_docx(redownload_docx=False)
+    # print(len(runs))
+    # print(list(r.text for r in runs[(1, 1, 68)]))
