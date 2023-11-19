@@ -32,12 +32,12 @@ def punc_needs_space_before(text):
     if text == None:
         return False
     
-    return re.match(r'^[“‘=+\-–—\(\[]$', text) != None
+    return re.match(r'^[“‘=+\(\[]$', text) != None
 
 def punc_needs_space_after(text):
     if text == None:
         return False
-    return re.match(r'^[’”.,=+\-–—?;:\)\]]$', text) != None
+    return re.match(r'^[’”.,=+?;:\)\]]$', text) != None
 
 def punc_needs_space_in_between(previous, current):
     if previous == None:
@@ -67,8 +67,11 @@ def needs_space(previous, current):
         is_punc(previous) and is_word(current)
     )
 
-def normalize_spacing(text):
-    tokens = re.findall(r'<[^>]+>|\w+|[^\w|^\s]', text)
+def format_text(text):
+    all_text = text
+
+    # Space normalization for punctuation: 
+    tokens = re.findall(r'<[^>]+>|\w+|[^\w\s]', all_text) # Tags, words, and punctuation.
 
     all_text = []
     previous = None
@@ -98,27 +101,23 @@ def normalize_spacing(text):
             raise Exception(f"Token not recognized: {current}")
 
     all_text = ''.join(all_text)
-    all_text = re.sub(r'\s+', ' ', all_text)
 
-    # Force hyphens to not have spaces.
-    all_text = re.sub(r'([^\s]+?) - ([^\s]+?)', r'\1-\2', all_text)
+    # Second round of substitutions to fix special case punctuation spacings.
+    subs = [
+        (r'([^\s]+?) - ([^\s]+?)', r'\1-\2'), # Force hyphens to not have spaces.
+        (r'(\d+) [\-–—] (\d+)', r'\1–\2'), # Force dashes between number to be en dashes with no space.
+        (r' (\w)\. (\w)\.', r' \1.\2.'), # Control spacing for special cases: i.e. e.g. A.V.
+        (r'(\w[’\']) (s[^\w])', r'\1\2'), # Force apostrophes to remove surrounding spaces.
+    ]
 
-    # Force dashes between number to be en dashes with no space.
-    all_text = re.sub(r'(\d+) [\-–—] (\d+)', r'\1–\2', all_text)
-
-    # Control spacing for special cases: i.e. e.g. A.V.
-    # all_text = re.sub(r'i\. e\.', 'i.e.', all_text)
-    # all_text = re.sub(r'e\. g\.', 'e.g.', all_text)
-    # all_text = re.sub(r'A\. V\.', 'A.V.', all_text)
-    # all_text = re.sub(r'E\. V\.', 'E.V.', all_text)
-    # all_text = re.sub(r'N\. T\.', 'N.T.', all_text)
-    # all_text = re.sub(r'O\. T\.', 'O.T.', all_text)
-    all_text = re.sub(r' (\d)\. (\d)\.', r' \1\.\2\.', all_text)
+    for find, replace in subs:
+        all_text = re.sub(find, replace, all_text)
 
     return all_text
 
+
 if __name__ == '__main__':
     # Example usage
-    input_text = "—A similar expression with regard to Israel is found in Exod. iv. 22, 23.<br><br><b>that it might be fulfilled</b> must not be ex- plained away: it never denotes the event or mere result, but always the <i>purpose</i>.<h2><u><b>16.</b>]</u></h2> Josephus makes no mention of this slaughter; nor is it likely that he would have done. Probably no great number of children perished in so small a place as Bethlehem and its neighbourhood. The modern objections to this narrative may be answered best by remembering the monstrous character of this tyrant, of whom Josephus asserts, “a dark choler seized on him, maddening him against all.’"
-    normalized_text = normalize_spacing(input_text)
+    input_text = "—A similar expression with regard to Israel is found in Exod. iv. 22, 23.<br><br><b>that it might be fulfilled</b> must not be explained away: it never denotes the event or mere result, but always the <i>purpose</i>.<h2><u><b>16.</b>]</u></h2> Josephus makes no mention of this slaughter; nor is it likely that he would have done. Probably no great number of children perished in so small a place as Bethlehem and its neighbourhood. The modern objections to this narrative may be answered best by remembering the monstrous character of this tyrant, of whom Josephus asserts, “a dark choler seized on him, maddening him against all.’ i. e. hello account \n\n\nof her. What about Rahab’s and Abraham’s sceptre or Isaac's?"
+    normalized_text = format_text(input_text)
     print(normalized_text)

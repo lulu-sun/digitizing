@@ -6,13 +6,15 @@
 
 from page_numbers import page_starts, new_testament_books, links
 from google_cloud import get_page_assignments_as_df, download_docx_from_drive
-from space_normalization import normalize_spacing
+from format_text import format_text
 from datetime import datetime
+from html_to_docx import convert_html_to_docx
 import pandas as pd
 import docx
 import re
 import os
 import shutil
+import time
 
 working_dir = "consolidation"
 input_dir = f"{working_dir}/input"
@@ -81,35 +83,7 @@ def get_detailed_progress():
         print(editor, count)
 
     return counts
-            
 
-def format_text(text):
-    text = text.rstrip() # Remove any trailing whitespace.
-
-    subs = [
-        (r'\n\n\n\n', '\n\n'), # Limit newlines to two.
-        (r'\n\n\n', '\n\n'), # Limit newlines to two.
-        (r'\n\n', '<br><br>'), # Convert empty lines to br tags.
-        (r'\s+', ' '), # Convert all other remaining continuous whitespace to a single space.
-        (r'</b><b>', ''), # Remove shortened bold tags
-        (r'</i><i>', ''), # Remove shortened italics tags
-        (r'</u><u>', ''), # Remove shortened underline tags 
-
-        # Periods
-        # (r'[^\.]\.[^\.]', '\. '), # Add space after every period.
-        # (r' \.[^\.]', '\.'), # Remove previous space for every period.
-        # (r'\s+', ' '), # Convert all other remaining continuous whitespace to a single space.
-
-        # Question Marks  
-        # (r'\?', '\? '), # Add space after.
-        # (r' \?', '\?'), # Remove previous space.
-        # (r'\s+', ' '), # Convert all other remaining continuous whitespace to a single space.
-    ]
-
-    for find, replace in subs:
-        text = re.sub(find, replace, text)
-
-    return text
 
 def get_all_runs_from_docx(redownload_docx=False):
      # remove input folder if redownloding.
@@ -141,7 +115,7 @@ def get_all_runs_from_docx(redownload_docx=False):
             completed = row[starting_column + 2]
             docx_file_path = get_file_path(volume, part, file_name)
             
-            print(f"{current}/{completed_count} Volume {volume} Part {part}", page_number, editor, completed, docx_file_path)
+            # print(f"{current}/{completed_count} Volume {volume} Part {part}", page_number, editor, completed, docx_file_path)
 
             if redownload_docx:
                 download_docx(volume, part, page_number)
@@ -160,6 +134,44 @@ def get_all_runs_from_docx(redownload_docx=False):
     
     return runs
 
+# Steps:
+# (Create an output at every step of the way so intermediate progress can be viewed.)
+# 1. Compile and convert all docx into various html files.
+# 2. Combine all html into single big html file.
+# 3. Run text formatting and space normalization on the big html.
+# 4. Convert processed big html into one big docx. 
+# 5. Convert big docx into PDF.
+def consolidate(redownload_docx=False):
+    start_time = time.time()
+
+    # 1. Compile and convert all docx into various html files.
+    print("Converting each docx file into an html file...")
+    convert_docx_to_html(redownload_docx)
+    print(f"Done.")
+
+    # 2. Combine all html into single big html file.
+    print("Combining html files into one html file...")
+    consolidate_html()
+    print("Done.")
+
+    # 3. Run text formatting and space normalization on the big html.
+    print("Formatting and processing the big html file...")
+    process_big_html()
+    print("Done.")
+
+    # 4. Convert processed big html into one big docx. 
+    print("Converting bht html file into big docx file...")
+    convert_big_html_to_docx()
+    print("Done.")
+
+    # 5. Convert big docx into PDF.
+
+    print(f"That took {round((time.time() - start_time) / 60, 2)} minutes.")
+
+
+def convert_big_html_to_docx():
+    convert_html_to_docx(f'{output_dir}/alford-processed.html', f'{output_dir}/alford-processed.docx')
+
 
 def convert_docx_to_html(redownload_docx=False):
     # remove html output files
@@ -171,7 +183,7 @@ def convert_docx_to_html(redownload_docx=False):
 
     for volume, part, page in runs.keys():
         formatted_html = []
-        
+
         for i, run in enumerate(runs[(volume, part, page)]):
             formatted_html.append(run_to_html(run))
 
@@ -180,13 +192,42 @@ def convert_docx_to_html(redownload_docx=False):
             formatted_html.append('\n')
 
         formatted_html = ''.join(formatted_html)
-        formatted_html = format_text(formatted_html)
+        formatted_html = copy_docx_formatting_to_html(formatted_html)
         
         output_file_path = f'{output_dir}/html/Vol {volume} Part {part}/{page}.html'
 
         os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
         with open(output_file_path, 'w') as f:
             f.write(formatted_html)
+
+
+def copy_docx_formatting_to_html(text):
+    text = text.rstrip() # Remove any trailing whitespace.
+
+    subs = [
+        (r'\n\n\n+', '\n\n'), # Limit newlines to two.
+        (r'\n\n', '<br><br>'), # Convert empty lines to br tags.
+        (r'\s+', ' '), # Convert all other remaining continuous whitespace to a single space.
+        (r'</b><b>', ''), # Remove shortened bold tags
+        (r'</i><i>', ''), # Remove shortened italics tags
+        (r'</u><u>', ''), # Remove shortened underline tags 
+    ]
+
+    for find, replace in subs:
+        text = re.sub(find, replace, text)
+
+    return text
+
+
+def process_big_html():
+    html_text = open(f'{output_dir}/alford.html', 'r').read()
+    html_text = process_html(html_text)
+    html_text = format_text(html_text)
+
+    with open(f'{output_dir}/alford-processed.html', 'w') as output_file:
+        output_file.write(html_text)
+
+    return html_text
 
 
 def process_html(html_text):
@@ -209,12 +250,11 @@ def process_html(html_text):
             output_text.append(block)
 
     output_text = ''.join(output_text)
-    output_text = normalize_spacing(output_text)
 
     return output_text
 
 
-def convert_html_to_verses():
+def consolidate_html():
     print("Processing html files...")
     all_text = []
 
@@ -245,8 +285,8 @@ def convert_html_to_verses():
 
                 # Identify tags in html
                 html_text = open(html_file_path, 'r').read()
-                processed_html = process_html(html_text)
-                all_text.append(processed_html)
+                # processed_html = process_html(html_text)
+                all_text.append(html_text)
                 
             else:
                 if first_missing_page == -1:
@@ -259,21 +299,23 @@ def convert_html_to_verses():
 
     final_text = '<br>'.join(all_text)
 
-    print("Writing final output...")
+    # print("Writing final output...")
 
     with open(f'{output_dir}/alford.html', 'w') as f:
         f.write(''.join(final_text))
 
-    print("Done.")
+    # print("Done.")
 
     return final_text
     
 
 if __name__ == '__main__':
-    convert_docx_to_html(redownload_docx=False)
-    convert_html_to_verses()
-    get_detailed_progress()
+    # convert_docx_to_html(redownload_docx=False)
+    # convert_html_to_verses()
+    # get_detailed_progress()
 
     # runs = get_all_runs_from_docx(redownload_docx=False)
     # print(len(runs))
     # print(list(r.text for r in runs[(1, 1, 68)]))
+
+    consolidate(redownload_docx=False)
