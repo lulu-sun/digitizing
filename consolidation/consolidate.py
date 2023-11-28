@@ -162,29 +162,59 @@ def consolidate(redownload_docx=False):
 
     # 2. Combine all html into single big html file.
     print("Combining html files into one html file...")
-    consolidate_html(f'{output_dir}/alford.html')
-    print("Done.")
+    consolidate_html(f'{output_dir}/2_alford.html')
 
     # 3. Run text formatting and space normalization on the html.
     print("Formatting and processing the html file...")
-    process_big_html(f'{output_dir}/alford.html', f'{output_dir}/alford-processed.html')
-    print("Done.")
+    process_big_html(f'{output_dir}/2_alford.html', f'{output_dir}/3_alford-processed.html')
 
     # 4. Parse all book, chapter, verse information into new html.
     print("Inserting chapter markers...")
-    insert_chapters_from_to_file(f'{output_dir}/alford-processed.html', f'{output_dir}/alford-chap-inserted.html')
-    print("Done.")
+    insert_chapters_from_to_file(f'{output_dir}/3_alford-processed.html', f'{output_dir}/4_alford-chap-inserted.html')
+
+    # 4a. Copy final html to index.hml.
+    print("Copying final html to index...")
+    copy_and_rename_file(f'{output_dir}/4_alford-chap-inserted.html', '.', 'index.html', )
+
+    # 4b. Remove docx links for PDF generation.
+    print("Preparing final html for PDF generation...")
+    remove_docx_links_for_pdf_gen(f'{output_dir}/4_alford-chap-inserted.html', f'{output_dir}/4b_alford-pdf-gen.html')
 
     # 5. Write everything to a nice formatted PDF.
     print("Generating final PDF...")
-    convert_html_to_pdf(f'{output_dir}/alford-chap-inserted.html', f'{output_dir}/alford.pdf')
-    print("Done.")
+    convert_html_to_pdf(f'{output_dir}/4b_alford-pdf-gen.html', f'{output_dir}/5_alford.pdf')
+    print("All done!")
 
     print(f"That took {round((time.time() - start_time) / 60, 2)} minutes.")
 
 
-def convert_big_html_to_docx():
-    convert_html_to_docx(f'{output_dir}/alford-processed.html', f'{output_dir}/alford-processed.docx')
+def remove_docx_links_for_pdf_gen(input_file_path, output_file_path):
+    html_text = open(input_file_path, 'r').read()
+    html_text = re.sub(r'<a href="([^"]+)" target="_blank"> \(DOCX LINK Volume \d, Part \d, Page \d+\)</a>', '', html_text)
+    open(output_file_path, 'w').write(html_text)
+
+
+def copy_and_rename_file(source_path, destination_directory, new_filename):
+    try:
+        # Copy the file to the destination directory
+        shutil.copy(source_path, destination_directory)
+
+        # Construct the new file path with the desired new filename
+        destination_path = os.path.join(destination_directory, new_filename)
+
+        # Rename the copied file to the new filename
+        os.rename(os.path.join(destination_directory, os.path.basename(source_path)), destination_path)
+
+        print(f"File '{source_path}' copied and renamed to '{destination_path}'.")
+    except FileNotFoundError:
+        print(f"Error: File '{source_path}' not found.")
+    except PermissionError:
+        print(f"Error: Permission denied. Check if you have the necessary permissions.")
+
+
+
+# def convert_big_html_to_docx():
+#     convert_html_to_docx(f'{output_dir}/alford-processed.html', f'{output_dir}/alford-processed.docx')
 
 
 def convert_docx_to_html(redownload_docx=False):
@@ -244,15 +274,39 @@ def process_big_html(input_file_path, output_file_path):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HTML with Font</title>
     <style>
+        /* Remove hyperlink color and underline */
+        a {
+            color: inherit;
+        }
+                          
         body {
             font-family: 'Source Serif', serif;
             font-size: 12px;
+        }
+                          
+        h1 {
+            text-align: center;
+        }
+                          
+        .cover-page {
+            text-align: center;
+            padding: 100px;
+            font-variant: small-caps;
+            font-size: 24px;
         }
                           
         @media print {
             .new-page {
                 page-break-before: always;
             }
+        }
+                          
+        .boxed-text {
+            border: 1px solid #000; /* Border style: 1px solid black */
+            padding: 10px; /* Padding inside the box */
+            margin: 7px; /* Margin around the box */
+            display: inline-block; /* Display boxes inline */
+            box-sizing: border-box; /* Include border and padding in the width */
         }
     </style>
 </head>
@@ -293,18 +347,26 @@ def consolidate_html(output_file_path):
     print("Processing html files...")
     all_text = []
 
-    current_datetime = datetime.now()
-    formatted_datetime = current_datetime.strftime("%B %d, %Y at %I:%M%p")
-    all_text.append(f"<h3>This file was generated on {formatted_datetime}</h3>")
+    # current_datetime = datetime.now()
+    # formatted_datetime = current_datetime.strftime("%B %d, %Y at %I:%M%p")
+    # all_text.append(f"<h3>This file was generated on {formatted_datetime}</h3>")
 
-    completed_count = get_progress()
-    all_text.append(f"<h3>PROGRESS: {completed_count}/1941 = {round(100 * completed_count / 1941, 2)}%</h3>")
+    # completed_count = get_progress()
+    # all_text.append(f"<h3>PROGRESS: {completed_count}/1941 = {round(100 * completed_count / 1941, 2)}%</h3>")
 
-    all_text.append("<h1>Table of Contents</h1>")
+    all_text.append("<div class=\"cover-page\">")
+    all_text.append("<h1>The New Testament For English Readers</h1>")
+    all_text.append("<h2>a critical and explanatory commentary</h2>")
+    all_text.append("by")
+    all_text.append("<h2>HENRY ALFORD, D.D.</h2>")
+    all_text.append("dean of canterbury.")
+    all_text.append("</div>")
+
+    all_text.append("<h1 class=\"new-page\">Table of Contents</h1>")
     for book in new_testament_books:
         all_text.append(f"<h2><a href=\"#{book}\">{book}</a></h2>")
         for i in range(1, new_testament_books_chapters[book] + 1):
-            all_text.append(f"<a href=\"#{book} {i}\">{i}</a> ")
+            all_text.append(f"<a href=\"#{book} {i}\"><div class=\"boxed-text\">{i}</div></a>")
 
     for book in new_testament_books:
         volume, part, first_page, last_page = page_starts[book]

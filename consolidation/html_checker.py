@@ -1,8 +1,7 @@
 import re
 
 
-raw_html = open('consolidation/output/alford.html').read()
-processed_html = open('consolidation/output/alford-processed.html').read()
+
 
 def get_output_file_path(name):
     return f'consolidation/output/check-{name}.txt'
@@ -42,6 +41,10 @@ def contains_roman_numeral(input_string):
     return False
 
 if __name__ == '__main__':
+    raw_html = open('consolidation/output/2_alford.html').read()
+    processed_html = open('consolidation/output/3_alford-processed.html').read()
+
+
     long_tags = []
     chap_tags = []
     dash_tags = []
