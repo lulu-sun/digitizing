@@ -156,9 +156,9 @@ def consolidate(redownload_docx=False):
     start_time = time.time()
 
     # 1. Compile and convert all docx into various html files.
-    # print(f"Converting each docx file into an html file (redownload_docx={redownload_docx})...")
-    # convert_docx_to_html(redownload_docx)
-    # print(f"Done.")
+    print(f"Converting each docx file into an html file (redownload_docx={redownload_docx})...")
+    convert_docx_to_html(redownload_docx)
+    print(f"Done.")
 
     # 2. Combine all html into single big html file.
     print("Combining html files into one html file...")
