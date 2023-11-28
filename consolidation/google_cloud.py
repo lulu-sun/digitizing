@@ -40,7 +40,7 @@ def download_docx_from_drive(file_id, output_file_path):
     done = False
     while done is False:
         status, done = downloader.next_chunk()
-        print("Download %d%%" % int(status.progress() * 100))
+        # print("Download %d%%" % int(status.progress() * 100))
 
     # The file has been downloaded into RAM, now save it in a file
     fh.seek(0)

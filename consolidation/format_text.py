@@ -104,10 +104,21 @@ def format_text(text):
 
     # Second round of substitutions to fix special case punctuation spacings.
     subs = [
-        (r'([^\s]+?) - ([^\s]+?)', r'\1-\2'), # Force hyphens to not have spaces.
-        (r'(\d+) [\-–—] (\d+)', r'\1–\2'), # Force dashes between number to be en dashes with no space.
-        (r' (\w)\. (\w)\.', r' \1.\2.'), # Control spacing for special cases: i.e. e.g. A.V.
+        (r'([^\s]+?) *- *([^\s]+?)', r'\1-\2'), # Force hyphens to not have spaces.
+        (r'(\d+) *[\-–—] *(\d+)', r'\1–\2'), # Force dashes between number to be en dashes with no space.
+        (r' ([A-Za-z])\. ([A-Za-z])\.', r' \1.\2.'), # Control spacing for special cases: i.e. e.g. A.V.
         (r'(\w[’\']) (s[^\w])', r'\1\2'), # Force apostrophes to remove surrounding spaces.
+        (r'&e', '&c'), # &e should be &c meaning etc
+        (r'snch', 'such'), # common typo
+        (r'([^\w])iu([^\w])', r'\1in\2'), # common typo
+        (r'snbjective', 'subjective'), # common typo
+        (r'([^\w])vy([^\w])', r'\1vv\2'), # common typo
+        (r'([^\w])sce([^\w])', r'\1see\2'), # common typo
+        (r'([^\w])meu([^\w])', r'\1men\2'), # common typo
+        (r'([^\w])ouly([^\w])', r'\1only\2'), # common typo
+        (r'([^\w])ef([^\w])', r'\1cf\2'), # common typo
+        (r'([^\w])Judea([^\w])', r'\1Judæa\2'), # common typo
+        (r'([^\w])Liicke([^\w])', r'\1Lücke\2'), # common typo
     ]
 
     for find, replace in subs:

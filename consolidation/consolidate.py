@@ -1,14 +1,10 @@
-# Assumptions:
-# - consolidation folder contains:
-#   - extracted_texts folder with all updated edited extracted_texts
-#   - Page Assignments.xlsx with all updated completed tracking
-#   - Above two files are in sync and agree with each other
-
-from page_numbers import page_starts, new_testament_books, links
+from page_numbers import page_starts, new_testament_books, links, new_testament_books_chapters
 from google_cloud import get_page_assignments_as_df, download_docx_from_drive
 from format_text import format_text
+from chap_finder import insert_chapters_from_to_file
 from datetime import datetime
 from html_to_docx import convert_html_to_docx
+from html_to_pdf import convert_html_to_pdf
 import pandas as pd
 import docx
 import re
@@ -85,7 +81,7 @@ def get_detailed_progress():
     return counts
 
 
-def get_all_runs_from_docx(redownload_docx=False):
+def get_all_html_from_docx(redownload_docx=False):
      # remove input folder if redownloding.
     if redownload_docx and os.path.exists(input_dir):
         shutil.rmtree(input_dir)
@@ -97,7 +93,7 @@ def get_all_runs_from_docx(redownload_docx=False):
     completed_count = get_progress(df)
     current = 0
 
-    runs = {} # key: (volume, part, page)
+    all_htmls = {} # key: (volume, part, page)
 
     for volume, part in [(1,1),(1,2),(2,1),(2,2)]:
         starting_column = ((volume - 1) * 8 + (part - 1) * 4)
@@ -116,6 +112,7 @@ def get_all_runs_from_docx(redownload_docx=False):
             docx_file_path = get_file_path(volume, part, file_name)
             
             # print(f"{current}/{completed_count} Volume {volume} Part {part}", page_number, editor, completed, docx_file_path)
+            print(f"\r{current}/{completed_count}", end="")
 
             if redownload_docx:
                 download_docx(volume, part, page_number)
@@ -125,46 +122,63 @@ def get_all_runs_from_docx(redownload_docx=False):
                 continue
             doc = docx.Document(docx_file_path)
 
-            if not (volume, part, page_number) in runs:
-                runs[(volume, part, page_number)] = []
+            htmls = []
 
             for i, paragraph in enumerate(doc.paragraphs):
+                htmls.append('\n')
+
                 for run in paragraph.runs:
-                    runs[(volume, part, page_number)].append(run)
+                    line = run_to_html(run)
+
+                    if line.isspace() and i == 0: # empty line at the top is treated as two newline chars.
+                        htmls.append('\n')
+                    
+                    htmls.append(line)
+
+            # if volume == 1 and part == 1 and page_number == 228:
+            #     print(htmls)
+            #     input()
+
+            all_htmls[(volume, part, page_number)] = ''.join(htmls)
+
+    print()
     
-    return runs
+    return all_htmls
 
 # Steps:
 # (Create an output at every step of the way so intermediate progress can be viewed.)
 # 1. Compile and convert all docx into various html files.
 # 2. Combine all html into single big html file.
 # 3. Run text formatting and space normalization on the big html.
-# 4. Convert processed big html into one big docx. 
-# 5. Convert big docx into PDF.
+# 4. Parse all book, chapter, verse information into new html.
+# 5. Write everything to a nice formatted PDF.
 def consolidate(redownload_docx=False):
     start_time = time.time()
 
     # 1. Compile and convert all docx into various html files.
-    print("Converting each docx file into an html file...")
-    convert_docx_to_html(redownload_docx)
-    print(f"Done.")
+    # print(f"Converting each docx file into an html file (redownload_docx={redownload_docx})...")
+    # convert_docx_to_html(redownload_docx)
+    # print(f"Done.")
 
     # 2. Combine all html into single big html file.
     print("Combining html files into one html file...")
-    consolidate_html()
+    consolidate_html(f'{output_dir}/alford.html')
     print("Done.")
 
-    # 3. Run text formatting and space normalization on the big html.
-    print("Formatting and processing the big html file...")
-    process_big_html()
+    # 3. Run text formatting and space normalization on the html.
+    print("Formatting and processing the html file...")
+    process_big_html(f'{output_dir}/alford.html', f'{output_dir}/alford-processed.html')
     print("Done.")
 
-    # 4. Convert processed big html into one big docx. 
-    print("Converting bht html file into big docx file...")
-    convert_big_html_to_docx()
+    # 4. Parse all book, chapter, verse information into new html.
+    print("Inserting chapter markers...")
+    insert_chapters_from_to_file(f'{output_dir}/alford-processed.html', f'{output_dir}/alford-chap-inserted.html')
     print("Done.")
 
-    # 5. Convert big docx into PDF.
+    # 5. Write everything to a nice formatted PDF.
+    print("Generating final PDF...")
+    convert_html_to_pdf(f'{output_dir}/alford-chap-inserted.html', f'{output_dir}/alford.pdf')
+    print("Done.")
 
     print(f"That took {round((time.time() - start_time) / 60, 2)} minutes.")
 
@@ -179,34 +193,31 @@ def convert_docx_to_html(redownload_docx=False):
     if os.path.exists(html_output_folder):
         shutil.rmtree(html_output_folder)
 
-    runs = get_all_runs_from_docx(redownload_docx)
+    all_htmls = get_all_html_from_docx(redownload_docx)
 
-    for volume, part, page in runs.keys():
-        formatted_html = []
+    for volume, part, page in all_htmls.keys():
+        html_text = all_htmls[(volume, part, page)]
 
-        for i, run in enumerate(runs[(volume, part, page)]):
-            formatted_html.append(run_to_html(run))
-
-            if i == 0: # at the top of the document, if there is just one empty line, that still counts as two newlines.
-                formatted_html.append('\n')
-            formatted_html.append('\n')
-
-        formatted_html = ''.join(formatted_html)
-        formatted_html = copy_docx_formatting_to_html(formatted_html)
+        html_text = copy_docx_formatting_to_html(html_text)
         
         output_file_path = f'{output_dir}/html/Vol {volume} Part {part}/{page}.html'
 
         os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
         with open(output_file_path, 'w') as f:
-            f.write(formatted_html)
+            f.write(html_text)
 
 
 def copy_docx_formatting_to_html(text):
     text = text.rstrip() # Remove any trailing whitespace.
 
     subs = [
-        (r'\n\n\n+', '\n\n'), # Limit newlines to two.
-        (r'\n\n', '<br><br>'), # Convert empty lines to br tags.
+        (r'\n</b>\n', '</b>\n\n'),
+        (r'\n</i>\n', '</i>\n\n'),
+        (r'\n</u>\n', '</u>\n\n'),
+        (r'<i>\s*\n\s*</i>', '\n'),
+        (r'<b>\s*\n\s*</b>', '\n'),
+        (r'<u>\s*\n\s*</u>', '\n'),
+        (r'\n\n+', '<br><br>'), # Limit newlines to two and convert two or more to br tags
         (r'\s+', ' '), # Convert all other remaining continuous whitespace to a single space.
         (r'</b><b>', ''), # Remove shortened bold tags
         (r'</i><i>', ''), # Remove shortened italics tags
@@ -219,19 +230,43 @@ def copy_docx_formatting_to_html(text):
     return text
 
 
-def process_big_html():
-    html_text = open(f'{output_dir}/alford.html', 'r').read()
-    html_text = process_html(html_text)
+def process_big_html(input_file_path, output_file_path):
+    html_text = open(input_file_path, 'r').read()
+    # html_text = process_html(html_text)
     html_text = format_text(html_text)
 
-    with open(f'{output_dir}/alford-processed.html', 'w') as output_file:
+    with open(output_file_path, 'w') as output_file:
+        output_file.write("""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML with Font</title>
+    <style>
+        body {
+            font-family: 'Source Serif', serif;
+            font-size: 12px;
+        }
+                          
+        @media print {
+            .new-page {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+""")
         output_file.write(html_text)
+
+        output_file.write("</body></html>")
 
     return html_text
 
 
 def process_html(html_text):
-    pattern = r'<br><br>([^<>]*(?:(?!<br>|\[.*\]).)*?\])'
+    pattern = r'<br><br>([^<>\[\]]*(?:(?!<br>|\[.*\]).)*?\])'
     result = re.split(pattern, html_text)
 
     output_text = []
@@ -254,7 +289,7 @@ def process_html(html_text):
     return output_text
 
 
-def consolidate_html():
+def consolidate_html(output_file_path):
     print("Processing html files...")
     all_text = []
 
@@ -265,10 +300,16 @@ def consolidate_html():
     completed_count = get_progress()
     all_text.append(f"<h3>PROGRESS: {completed_count}/1941 = {round(100 * completed_count / 1941, 2)}%</h3>")
 
+    all_text.append("<h1>Table of Contents</h1>")
+    for book in new_testament_books:
+        all_text.append(f"<h2><a href=\"#{book}\">{book}</a></h2>")
+        for i in range(1, new_testament_books_chapters[book] + 1):
+            all_text.append(f"<a href=\"#{book} {i}\">{i}</a> ")
+
     for book in new_testament_books:
         volume, part, first_page, last_page = page_starts[book]
 
-        all_text.append(f"<h1>Book: {book}</h1>")
+        all_text.append(f"<h1 class=\"new-page\" id=\"{book}\">{book}</h1>")
 
         first_missing_page = last_missing_page = -1
 
@@ -281,7 +322,7 @@ def consolidate_html():
                     all_text.append(f"<h2>MISSING PAGES: Volume {volume}, Part {part}, {book}, Pages {first_missing_page}-{last_missing_page} missing.</h2>")
                     first_missing_page = last_missing_page = -1
 
-                all_text.append(f'<h3><a href="{links[(volume, part, page)]}" target="_blank">DOCX LINK: Volume {volume}, Part {part}, Page {page}:</a></h3>')
+                all_text.append(f'<a href="{links[(volume, part, page)]}" target="_blank">(DOCX LINK Volume {volume}, Part {part}, Page {page})</a>')
 
                 # Identify tags in html
                 html_text = open(html_file_path, 'r').read()
@@ -297,25 +338,27 @@ def consolidate_html():
         if first_missing_page != -1:
             all_text.append(f"<h2>MISSING PAGES: Volume {volume}, Part {part}, {book}, Pages {first_missing_page}-{last_missing_page} missing.</h2>")
 
-    final_text = '<br>'.join(all_text)
+    final_text = ' '.join(all_text)
 
     # print("Writing final output...")
 
-    with open(f'{output_dir}/alford.html', 'w') as f:
-        f.write(''.join(final_text))
+    with open(output_file_path, 'w') as f:
+        f.write(final_text)
 
     # print("Done.")
 
     return final_text
     
 
+def ask_yn(question):
+    response = input(f'{question} (y/n) ')
+    return response.strip().lower() == 'y'
+
 if __name__ == '__main__':
+    # Old Process:
     # convert_docx_to_html(redownload_docx=False)
     # convert_html_to_verses()
     # get_detailed_progress()
 
-    # runs = get_all_runs_from_docx(redownload_docx=False)
-    # print(len(runs))
-    # print(list(r.text for r in runs[(1, 1, 68)]))
-
-    consolidate(redownload_docx=False)
+    # New Consolidation:
+    consolidate(redownload_docx=ask_yn("Redownload all docx?"))
