@@ -114,6 +114,7 @@ def format_text(text):
         (r'snbjective', 'subjective'), # common typo
         (r'([^\w])vy([^\w])', r'\1vv\2'), # common typo
         (r'([^\w])sce([^\w])', r'\1see\2'), # common typo
+        (r'([^\w])aud([^\w])', r'\1and\2'), # common typo
         (r'([^\w])meu([^\w])', r'\1men\2'), # common typo
         (r'([^\w])ouly([^\w])', r'\1only\2'), # common typo
         (r'([^\w])ef([^\w])', r'\1cf\2'), # common typo

@@ -1,6 +1,6 @@
 import re
 import roman
-from page_numbers import new_testament_books, new_testament_books_chapters
+from new_testament_books import books, book_chapters
 from html_checker import is_roman_numeral
 
 
@@ -28,7 +28,7 @@ def insert_chapters(html_text):
             
             # print("New book found:", new_book)
             
-            if not current_book or new_testament_books_chapters[current_book] == current_chapter:
+            if not current_book or book_chapters[current_book] == current_chapter:
                 current_book = new_book
                 current_chapter = 0
             else:
@@ -62,11 +62,11 @@ def insert_chapters(html_text):
 
                 roman_numeral = roman_numeral[:-1]
                 number = roman.fromRoman(roman_numeral)
-                if number == current_chapter + 1 and number <= new_testament_books_chapters[current_book]:
+                if number == current_chapter + 1 and number <= book_chapters[current_book]:
                     current_chapter = number
                     # print(f"Current chapter: {current_book} {current_chapter}")
-                    
-                    all_text.append(f"<h2 id=\"{current_book} {current_chapter}\">{current_book} Chapter {current_chapter}</h2>")
+                    new_page = "class=\"new-page\"" if current_chapter > 1 else ""
+                    all_text.append(f"<h2 {new_page} id=\"{current_book} {current_chapter}\"><i>{current_book}: Chapter {current_chapter}</i></h2>")
 
                     skipped = 0
                 else:

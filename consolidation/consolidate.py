@@ -1,4 +1,4 @@
-from page_numbers import page_starts, new_testament_books, links, new_testament_books_chapters
+from new_testament_books import page_starts, books, links, book_chapters, book_formal_names
 from google_cloud import get_page_assignments_as_df, download_docx_from_drive
 from format_text import format_text
 from chap_finder import insert_chapters_from_to_file
@@ -272,7 +272,7 @@ def process_big_html(input_file_path, output_file_path):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML with Font</title>
+    <title>The New Testament For English Readers</title>
     <style>
         /* Remove hyperlink color and underline */
         a {
@@ -286,6 +286,7 @@ def process_big_html(input_file_path, output_file_path):
                           
         h1 {
             text-align: center;
+            font-variant: small-caps;
         }
                           
         .cover-page {
@@ -301,12 +302,18 @@ def process_big_html(input_file_path, output_file_path):
             }
         }
                           
-        .boxed-text {
-            border: 1px solid #000; /* Border style: 1px solid black */
-            padding: 10px; /* Padding inside the box */
-            margin: 7px; /* Margin around the box */
-            display: inline-block; /* Display boxes inline */
-            box-sizing: border-box; /* Include border and padding in the width */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            text-align: center;
+        }
+
+        col {
+            width: 50%; /* Set each column to be 50% of the table width */
         }
     </style>
 </head>
@@ -363,15 +370,35 @@ def consolidate_html(output_file_path):
     all_text.append("</div>")
 
     all_text.append("<h1 class=\"new-page\">Table of Contents</h1>")
-    for book in new_testament_books:
-        all_text.append(f"<h2><a href=\"#{book}\">{book}</a></h2>")
-        for i in range(1, new_testament_books_chapters[book] + 1):
-            all_text.append(f"<a href=\"#{book} {i}\"><div class=\"boxed-text\">{i}</div></a>")
 
-    for book in new_testament_books:
+    all_text.append("<table><colgroup><col><col></colgroup>")
+    for i in range(len(books) // 2 + 1):
+        book1 = books[i]
+        book2 = books[i + len(books) // 2 + 1] if i + len(books) // 2 + 1 < len(books) else None
+        all_text.append("<tr>")
+        all_text.append(f"<td><h2><a href=\"#{book1}TOC\">{book1}</a></h2></td>")
+        if book2:
+            all_text.append(f"<td><h2><a href=\"#{book2}TOC\">{book2}</a></h2></td>")
+        all_text.append("</tr>")
+    all_text.append("</table>")
+
+    for book in books:
         volume, part, first_page, last_page = page_starts[book]
 
-        all_text.append(f"<h1 class=\"new-page\" id=\"{book}\">{book}</h1>")
+        all_text.append(f"<h1 class=\"new-page\" id=\"{book}TOC\"><a href=\"#{book}\">{book}</a></h1>")
+
+        all_text.append("<table><colgroup><col><col></colgroup>")
+        for i in range(1, (book_chapters[book] + 1) // 2 + 1):
+            c1 = i
+            c2 = i + (book_chapters[book] + 1) // 2 if i + (book_chapters[book] + 1) // 2 <= book_chapters[book] else -1
+            all_text.append("<tr>")
+            all_text.append(f"<td><h2><a href=\"#{book} {c1}\">Chapter {c1}</a></h2></td>")
+            if c2 > 0:
+                all_text.append(f"<td><h2><a href=\"#{book} {c2}\">Chapter {c2}</a></h2></td>")
+            all_text.append("</tr>")
+        all_text.append("</table>")
+        
+        all_text.append(f"<h1 class=\"new-page\" id=\"{book}\">{book_formal_names[book]}</h1>")
 
         first_missing_page = last_missing_page = -1
 

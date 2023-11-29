@@ -7,14 +7,16 @@ def convert_html_to_pdf(html_file, output_pdf):
         'print-media-type': '',  # Use print media type instead of screen (optional)
         'disable-smart-shrinking': '',  # Disable the intelligent shrinking strategy (optional)
         'page-size': 'Letter',  # Specify the page size (optional)
-        'margin-top': '15mm',  # Set top margin (optional)
-        'margin-right': '15mm',  # Set right margin (optional)
-        'margin-bottom': '15mm',  # Set bottom margin (optional)
-        'margin-left': '15mm',  # Set left margin (optional)
+        'margin-top': '1in',  # Set top margin (optional)
+        'margin-right': '1in',  # Set right margin (optional)
+        'margin-bottom': '1in',  # Set bottom margin (optional)
+        'margin-left': '1in',  # Set left margin (optional)
         # 'header-left': '',  # Set left header (optional)
-        # 'header-right': '',  # Set right header (optional)
+        # 'header-right': '[title]',  # Set right header (optional)
         # 'footer-left': '',  # Set left footer (optional)
-        # 'footer-right': '',  # Set right footer (optional)
+        # 'footer-right': '[page]',  # Set right footer (optional)
+        'footer-font-name': 'Times New Roman',
+        'footer-font-size': '10',
         'encoding': 'utf-8',  # Specify encoding (optional)
         'custom-header': [
             ('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'),

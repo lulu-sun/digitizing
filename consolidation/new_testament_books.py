@@ -30,7 +30,7 @@ page_starts = {
     "Revelation": (2, 2, 592, 754),
 }
 
-new_testament_books = [
+books = [
     'Matthew', 'Mark', 'Luke', 'John', 'Acts', 'Romans', '1 Corinthians',
     '2 Corinthians', 'Galatians', 'Ephesians', 'Philippians', 'Colossians',
     '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy', 'Titus',
@@ -38,7 +38,7 @@ new_testament_books = [
     '3 John', 'Jude', 'Revelation'
 ]
 
-new_testament_books_chapters = {
+book_chapters = {
     'Matthew': 28,
     'Mark': 16,
     'Luke': 24,
@@ -66,6 +66,36 @@ new_testament_books_chapters = {
     '3 John': 1,
     'Jude': 1,
     'Revelation': 22
+}
+
+book_formal_names = {
+    "Matthew": "The Gospel According To Matthew",
+    "Mark": "The Gospel According To Mark",
+    "Luke": "The Gospel According To Luke",
+    "John": "The Gospel According To John",
+    "Acts": "The Acts Of The Apostles",
+    "Romans": "The Epistle Of Paul The Apostle To The Romans",
+    "1 Corinthians": "The First Letter Of Paul The Apostle To The Corinthians",
+    "2 Corinthians": "The Second Letter Of Paul The Apostle To The Corinthians",
+    "Galatians": "The Epistle Of Paul The Apostle To The Galatians",
+    "Ephesians": "The Epistle Of Paul The Apostle To The Ephesians",
+    "Philippians": "The Epistle Of Paul The Apostle To The Philippians",
+    "Colossians": "The Epistle Of Paul The Apostle To The Colossians",
+    "1 Thessalonians": "The First Letter Of Paul The Apostle To The Thessalonians",
+    "2 Thessalonians": "The Second Letter Of Paul The Apostle To The Thessalonians",
+    "1 Timothy": "The First Letter Of Paul The Apostle To Timothy",
+    "2 Timothy": "The Second Letter Of Paul The Apostle To Timothy",
+    "Titus": "The Epistle Of Paul To Titus",
+    "Philemon": "The Epistle Of Paul To Philemon",
+    "Hebrews": "The Epistle To The Hebrews",
+    "James": "The General Epistle Of James",
+    "1 Peter": "The First Epistle General Of Peter",
+    "2 Peter": "The Second Epistle General Of Peter",
+    "1 John": "The First Epistle General Of John",
+    "2 John": "The Second Epistle Of John",
+    "3 John": "The Third Epistle Of John",
+    "Jude": "The General Epistle Of Jude",
+    "Revelation": "The Revelation Of John",
 }
 
 # (volume, part, page) -> google drive link
