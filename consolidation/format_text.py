@@ -120,6 +120,7 @@ def format_text(text):
         (r'([^\w])ef([^\w])', r'\1cf\2'), # common typo
         (r'([^\w])Judea([^\w])', r'\1Judæa\2'), # common typo
         (r'([^\w])Liicke([^\w])', r'\1Lücke\2'), # common typo
+        (r'[\.,:;\-–—]&c', r'\1 &c'), # &e should be &c meaning etc
     ]
 
     for find, replace in subs:
