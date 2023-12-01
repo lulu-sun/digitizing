@@ -274,7 +274,13 @@ def process_big_html(input_file_path, output_file_path):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The New Testament For English Readers</title>
     <style>
-        @font-face { font-family: Caslon; src: url('consolidation/Adobe Caslon Pro Regular.ttf'); } 
+        @font-face { font-family: Caslon; src: url('https://github.com/brotatotes/digitizing-alford/raw/main/consolidation/Adobe%20Caslon%20Pro%20Regular.ttf'); } 
+        
+        @font-face { font-family: Caslon; font-weight: bold; src: url('https://github.com/brotatotes/digitizing-alford/raw/main/consolidation/Adobe%20Caslon%20Pro%20Bold.ttf');}
+                          
+        @font-face { font-family: Caslon; font-style: italic; src: url('https://github.com/brotatotes/digitizing-alford/raw/main/consolidation/Adobe%20Caslon%20Pro%20Italic.ttf');}
+                          
+        @font-face { font-family: Caslon; font-weight: bold; font-style: italic; src: url('https://github.com/brotatotes/digitizing-alford/raw/main/consolidation/Adobe%20Caslon%20Pro%20Bold%20Italic.ttf');}
 
         /* Remove hyperlink color and underline */
         a {

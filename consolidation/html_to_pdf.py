@@ -16,7 +16,7 @@ def convert_html_to_pdf(html_file, output_pdf):
         # 'footer-left': '',  # Set left footer (optional)
         # 'footer-right': '[page]',  # Set right footer (optional)
         'footer-center': '[page]',  # Set center footer (optional)
-        'footer-font-name': 'Times New Roman',
+        'footer-font-name': 'Caslon',
         'footer-font-size': '10',
         'encoding': 'utf-8',  # Specify encoding (optional)
         'custom-header': [
