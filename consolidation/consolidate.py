@@ -290,7 +290,7 @@ def process_big_html(input_file_path, output_file_path):
         }
                           
         body {
-            font-family: 'Caslon';
+            font-family: 'Source Serif', serif;
             font-size: 12px;
         }
                           
