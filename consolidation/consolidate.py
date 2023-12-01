@@ -274,13 +274,15 @@ def process_big_html(input_file_path, output_file_path):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The New Testament For English Readers</title>
     <style>
+        @font-face { font-family: Caslon; src: url('consolidation/Adobe Caslon Pro Regular.ttf'); } 
+
         /* Remove hyperlink color and underline */
         a {
             color: inherit;
         }
                           
         body {
-            font-family: 'Source Serif', serif;
+            font-family: 'Caslon';
             font-size: 12px;
         }
                           

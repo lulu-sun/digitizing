@@ -65,7 +65,12 @@ def insert_chapters(html_text):
                 if number == current_chapter + 1 and number <= book_chapters[current_book]:
                     current_chapter = number
                     # print(f"Current chapter: {current_book} {current_chapter}")
-                    new_page = "class=\"new-page\"" if current_chapter > 1 else ""
+
+                    # Add new page for each chapter
+                    # new_page = "class=\"new-page\"" if current_chapter > 1 else ""
+
+                    # Don't add new page for each chapter
+                    new_page = ""
                     all_text.append(f"<h2 {new_page} id=\"{current_book} {current_chapter}\"><i>{current_book}: Chapter {current_chapter}</i></h2>")
 
                     skipped = 0

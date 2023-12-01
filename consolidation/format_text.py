@@ -109,18 +109,18 @@ def format_text(text):
         (r' ([A-Za-z])\. ([A-Za-z])\.', r' \1.\2.'), # Control spacing for special cases: i.e. e.g. A.V.
         (r'(\w[’\']) (s[^\w])', r'\1\2'), # Force apostrophes to remove surrounding spaces.
         (r'&e', '&c'), # &e should be &c meaning etc
+        (r'([\.,:;\-–—])&c', r'\1 &c'), # &e should be &c meaning etc
         (r'snch', 'such'), # common typo
         (r'([^\w])iu([^\w])', r'\1in\2'), # common typo
         (r'snbjective', 'subjective'), # common typo
         (r'([^\w])vy([^\w])', r'\1vv\2'), # common typo
-        (r'([^\w])sce([^\w])', r'\1see\2'), # common typo
-        (r'([^\w])aud([^\w])', r'\1and\2'), # common typo
-        (r'([^\w])meu([^\w])', r'\1men\2'), # common typo
-        (r'([^\w])ouly([^\w])', r'\1only\2'), # common typo
+        (r'([^\w])([sS])ce([^\w])', r'\1\2ee\3'), # common typo
+        (r'([^\w])([aA])ud([^\w])', r'\1\2nd\3'), # common typo
+        (r'([^\w])(mM)eu([^\w])', r'\1\2en\3'), # common typo
+        (r'([^\w])(oO)uly([^\w])', r'\1\2nly\3'), # common typo
         (r'([^\w])ef([^\w])', r'\1cf\2'), # common typo
         (r'([^\w])Judea([^\w])', r'\1Judæa\2'), # common typo
         (r'([^\w])Liicke([^\w])', r'\1Lücke\2'), # common typo
-        (r'[\.,:;\-–—]&c', r'\1 &c'), # &e should be &c meaning etc
     ]
 
     for find, replace in subs:
