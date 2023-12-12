@@ -183,6 +183,7 @@ def consolidate(redownload_docx=False):
     # 5. Write everything to a nice formatted PDF.
     print("Generating final PDF...")
     convert_html_to_pdf(f'{output_dir}/4b_alford-pdf-gen.html', f'{output_dir}/5_alford.pdf')
+    copy_and_rename_file(f'{output_dir}/5_alford.pdf', '.', 'New Testament for English Readers - Henry Alford (DRAFT).pdf')
     print("All done!")
 
     print(f"That took {round((time.time() - start_time) / 60, 2)} minutes.")
