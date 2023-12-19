@@ -171,7 +171,11 @@ def consolidate(redownload_docx=False):
 
     # 3a. Keep a copy with custom verse tags. Consolidation continues without custom verse tags.
     remove_custom_verse_tags(f'{output_dir}/3_alford-processed-with-verse-tags.html', f'{output_dir}/3_alford-processed.html')
-    remove_docx_links_for_pdf_gen(f'{output_dir}/3_alford-processed-with-verse-tags.html', f'{output_dir}/3_alford-processed-with-verse-tags.html')
+    remove_docx_links(f'{output_dir}/3_alford-processed-with-verse-tags.html', f'{output_dir}/3_alford-processed-with-verse-tags.html')
+
+    # 3b. Generate Henry Alford verse-by-verse commentaries.
+    print("Parsing commentary by verse sections (for BibleGo)...")
+    parse_and_write_commentary(f'{output_dir}/3_alford-processed-with-verse-tags.html', f'{output_dir}/Henry Alford/')
 
     # 4. Parse all book, chapter, verse information into new html.
     print("Inserting chapter markers...")
@@ -183,23 +187,19 @@ def consolidate(redownload_docx=False):
 
     # 4b. Remove docx links for PDF generation.
     print("Preparing final html for PDF generation...")
-    remove_docx_links_for_pdf_gen(f'{output_dir}/4_alford-chap-inserted.html', f'{output_dir}/4b_alford-pdf-gen.html')
+    remove_docx_links(f'{output_dir}/4_alford-chap-inserted.html', f'{output_dir}/4b_alford-pdf-gen.html')
 
     # 5. Write everything to a nice formatted PDF.
     print("Generating final PDF...")
     convert_html_to_pdf(f'{output_dir}/4b_alford-pdf-gen.html', f'{output_dir}/5_alford.pdf')
     copy_and_rename_file(f'{output_dir}/5_alford.pdf', '.', 'New Testament for English Readers - Henry Alford (DRAFT).pdf')
 
-    # 6. Generate Henry Alford verse-by-verse commentaries.
-    print("Parsing commentary by verse sections (for BibleGo)...")
-    parse_and_write_commentary(f'{output_dir}/3_alford-processed-with-verse-tags.html', f'{output_dir}/Henry Alford/')
-
     print("All done!")
 
     print(f"That took {round((time.time() - start_time) / 60, 2)} minutes.")
 
 
-def remove_docx_links_for_pdf_gen(input_file_path, output_file_path):
+def remove_docx_links(input_file_path, output_file_path):
     html_text = open(input_file_path, 'r').read()
     html_text = re.sub(r'<a href="([^"]+)" target="_blank"> \(DOCX LINK Volume \d, Part \d, Page \d+\)</a>', '', html_text)
     open(output_file_path, 'w').write(html_text)

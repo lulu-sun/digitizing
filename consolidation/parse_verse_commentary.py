@@ -80,7 +80,7 @@ def parse_commentary(html_file):
             if match_obj.start() == 0:
                 new_book = match_obj.group(1)  
                 
-                print("New book found:", new_book)
+                # print("New book found:", new_book)
                 
                 if not current_book or book_chapters[current_book] == current_chapter:
                     current_book = new_book
@@ -137,7 +137,7 @@ def parse_commentary(html_file):
                 if number == current_chapter + 1 and number <= book_chapters[current_book]:
                     current_chapter = number
                     current_verse = 0
-                    print(f"Current chapter: {current_book} {current_chapter}")
+                    # print(f"Current chapter: {current_book} {current_chapter}")
 
                     # Add new page for each chapter
                     # new_page = "class=\"new-page\"" if current_chapter > 1 else ""
