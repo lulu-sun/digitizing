@@ -51,6 +51,16 @@ def parse_commentary(html_file):
 
     commentary = {}
 
+    def insert_commentary(book, chapter, verse, verse_commentary):
+        if chapter <= 0 or verse <= 0 or not book in book_chapters:
+            raise Exception(f"Invalid Verse: {book} {chapter}:{verse}")
+        
+        key = (current_book, current_chapter, current_verse) 
+        if key not in commentary:
+            commentary[key] = []
+
+        commentary[key].append(verse_commentary)
+
     verse_ranges = {}
     verse_singles = {}
 
@@ -58,21 +68,34 @@ def parse_commentary(html_file):
     current_book = ''
     current_chapter = 0
     current_verse = 0
-    
-    for block in html_text.split('<br><br>'):
-        block_copy = block
+
+    queue = html_text.split('<br><br>')
+
+    while queue:
+        block = queue.pop(0)
+
         match_obj = re.search(r'<h1 class="new-page" id="([\w\s]+)"> ([\w\s]+)</h1>', block)
         if match_obj:
-            new_book = match_obj.group(1)
+
+            if match_obj.start() == 0:
+                new_book = match_obj.group(1)  
+                
+                print("New book found:", new_book)
+                
+                if not current_book or book_chapters[current_book] == current_chapter:
+                    current_book = new_book
+                    current_chapter = 0
+                    current_verse = 0
+                else:
+                    raise Exception(f"New book found but chapters of previous book not finished. Current chapter: {current_book} {current_chapter}")
             
-            print("New book found:", new_book)
-            
-            if not current_book or book_chapters[current_book] == current_chapter:
-                current_book = new_book
-                current_chapter = 0
-                current_verse = 0
             else:
-                raise Exception(f"New book found but chapters of previous book not finished. Current chapter: {current_book} {current_chapter}")
+                b1 = block[:match_obj.start()]
+                b2 = block[match_obj.start():]                
+                queue.insert(0, b2)
+                queue.insert(0, b1)
+
+            continue
             
         tag = block.split(']')[0]
 
@@ -87,18 +110,10 @@ def parse_commentary(html_file):
                         current_verse = int(it)
                         verse_commentary = split_items[i + 1]
 
-                        key = (current_book, current_chapter, current_verse)
-                        if key not in commentary:
-                            commentary[key] = []
-                        
-                        commentary[key].append(verse_commentary)
+                        insert_commentary(current_book, current_chapter, current_verse, verse_commentary)
             else:
-                if current_verse > 0:
-                    key = (current_book, current_chapter, current_verse) 
-                    if key not in commentary:
-                        commentary[key] = []
-                    
-                    commentary[key].append(block)  
+                if current_chapter > 0 and current_verse > 0:
+                    insert_commentary(current_book, current_chapter, current_verse, block)
             continue
 
         tag = remove_tags(tag)
@@ -167,11 +182,7 @@ def parse_commentary(html_file):
                         current_verse = int(it)
                         verse_commentary = split_items[i + 1]
 
-                        key = (current_book, current_chapter, current_verse)
-                        if key not in commentary:
-                            commentary[key] = []
-                        
-                        commentary[key].append(verse_commentary)
+                        insert_commentary(current_book, current_chapter, current_verse, verse_commentary)
             else: # there's no {\d+} in this block
                 # current_verse = int(low)
 
@@ -196,11 +207,7 @@ def parse_commentary(html_file):
 
                 verse_singles[(current_book, current_chapter)].append(current_verse)
 
-                key = (current_book, current_chapter, current_verse) 
-                if key not in commentary:
-                    commentary[key] = []
-                
-                commentary[key].append(block)  
+                insert_commentary(current_book, current_chapter, current_verse, block)
                 
             else: # Is a tag but not a verse tag or chapter tag
                 match_obj = re.search(r'{\d+}', block)
@@ -212,18 +219,10 @@ def parse_commentary(html_file):
                             current_verse = int(it)
                             verse_commentary = split_items[i + 1]
 
-                            key = (current_book, current_chapter, current_verse)
-                            if key not in commentary:
-                                commentary[key] = []
-                            
-                            commentary[key].append(verse_commentary)
+                            insert_commentary(current_book, current_chapter, current_verse, verse_commentary)
                 else:
                     if current_verse > 0:
-                        key = (current_book, current_chapter, current_verse) 
-                        if key not in commentary:
-                            commentary[key] = []
-                        
-                        commentary[key].append(block)           
+                        insert_commentary(current_book, current_chapter, current_verse, block)     
 
 
     empty_keys = []
