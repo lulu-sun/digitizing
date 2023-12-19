@@ -127,10 +127,10 @@ def get_all_html_from_docx(redownload_docx=False):
             for i, paragraph in enumerate(doc.paragraphs):
                 htmls.append('\n')
 
-                for run in paragraph.runs:
+                for j, run in enumerate(paragraph.runs):
                     line = run_to_html(run)
 
-                    if line.isspace() and i == 0: # empty line at the top is treated as two newline chars.
+                    if line.isspace() and i == 0 and j == 0: # empty line at the top is treated as two newline chars.
                         htmls.append('\n')
                     
                     htmls.append(line)

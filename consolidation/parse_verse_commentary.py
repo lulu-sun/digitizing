@@ -51,8 +51,6 @@ def count_verse_tags(html_file):
     current_book = ''
     current_chapter = 0
     current_verse = 0
-
-    all_text = []
     
     for block in html_text.split('<br><br>'):
         block_copy = block
@@ -65,30 +63,48 @@ def count_verse_tags(html_file):
             if not current_book or book_chapters[current_book] == current_chapter:
                 current_book = new_book
                 current_chapter = 0
+                current_verse = 0
             else:
                 raise Exception(f"New book found but chapters of previous book not finished. Current chapter: {current_book} {current_chapter}")
-
-        if ']' not in block:
-            all_text.append(block + '<br><br>')
-            continue
-
+            
         tag = block.split(']')[0]
-        if tag.count('[') > tag.count(']'):
-            # not a tag because of opening bracket.
-            all_text.append(block + '<br><br>')
+
+        # Not a tag.
+        if ']' not in block or tag.count('[') > tag.count(']'):
+            match_obj = re.search(r'{\d+}', block)
+            if match_obj:
+                split_items = re.split(r'{(\d+)}', block)
+                
+                for i, it in enumerate(split_items):
+                    if re.match(r'^\d+$', it):
+                        current_verse = int(it)
+                        verse_commentary = split_items[i + 1]
+
+                        key = (current_book, current_chapter, current_verse)
+                        if key not in commentary:
+                            commentary[key] = []
+                        
+                        commentary[key].append(verse_commentary)
+            else:
+                if current_verse > 0:
+                    key = (current_book, current_chapter, current_verse) 
+                    if key not in commentary:
+                        commentary[key] = []
+                    
+                    commentary[key].append(block)  
             continue
 
         tag = remove_tags(tag)
 
         match_obj = re.search(r' ([IVX]+\.)', tag)
 
+        # Chapter tag
         if match_obj:
             roman_numeral = match_obj.group(1)
 
             # ignore roman_numerals after dashes
             dash_in_tag = re.search(r'[\-–—]', tag)
             if dash_in_tag and dash_in_tag.start() < tag.find(roman_numeral):
-                all_text.append(block + '<br><br>')
                 continue
 
             if is_roman_numeral(roman_numeral):
@@ -98,6 +114,7 @@ def count_verse_tags(html_file):
                 number = roman.fromRoman(roman_numeral)
                 if number == current_chapter + 1 and number <= book_chapters[current_book]:
                     current_chapter = number
+                    current_verse = 0
                     # print(f"Current chapter: {current_book} {current_chapter}")
 
                     # Add new page for each chapter
@@ -118,8 +135,7 @@ def count_verse_tags(html_file):
                         raise Exception(f"Too many unexpected chapters. Current chapter: {current_book} {current_chapter}; Chapter found: {number}")
                     skipped += 1
 
-
-        # search verse range.
+        # Verse Range tag
         match_obj1 = re.search(r'(\d+)–(\d+)', tag)
         match_obj2 = re.search(r'(\d+), (\d+)', tag)
         if match_obj1 or match_obj2:
@@ -149,22 +165,23 @@ def count_verse_tags(html_file):
                             commentary[key] = []
                         
                         commentary[key].append(verse_commentary)
-            else:
-                current_verse = int(low)
+            else: # there's no {\d+} in this block
+                # current_verse = int(low)
 
-                key = (current_book, current_chapter, current_verse)
-                if key not in commentary:
-                    commentary[key] = []
+                # key = (current_book, current_chapter, current_verse)
+                # if key not in commentary:
+                #     commentary[key] = []
                 
-                commentary[key].append(verse_commentary)
+                # commentary[key].append(verse_commentary)
+                pass
                 
 
-        # search for verse in individual verse tag.
+        # Individual Verse Tag
         else:
-            match_obj = re.search(r'\d+', tag)
+            match_obj = re.search(r'[^{](\d+)[^}]', tag)
 
             if match_obj:
-                v = match_obj.group(0)
+                v = match_obj.group(1)
                 current_verse = int(v)
                 
                 if (current_book, current_chapter) not in verse_singles:
@@ -172,14 +189,35 @@ def count_verse_tags(html_file):
 
                 verse_singles[(current_book, current_chapter)].append(current_verse)
 
-                # print(current_book, current_chapter, current_verse, tag)
-                # print(block)
-                # input()
                 key = (current_book, current_chapter, current_verse) 
                 if key not in commentary:
                     commentary[key] = []
                 
-                commentary[key].append(block)
+                commentary[key].append(block)  
+                
+            else: # Is a tag but not a verse tag or chapter tag
+                match_obj = re.search(r'{\d+}', block)
+                if match_obj:
+                    split_items = re.split(r'{(\d+)}', block)
+                    
+                    for i, it in enumerate(split_items):
+                        if re.match(r'^\d+$', it):
+                            current_verse = int(it)
+                            verse_commentary = split_items[i + 1]
+
+                            key = (current_book, current_chapter, current_verse)
+                            if key not in commentary:
+                                commentary[key] = []
+                            
+                            commentary[key].append(verse_commentary)
+                else:
+                    if current_verse > 0:
+                        key = (current_book, current_chapter, current_verse) 
+                        if key not in commentary:
+                            commentary[key] = []
+                        
+                        commentary[key].append(block)           
+
 
     empty_keys = []
 
