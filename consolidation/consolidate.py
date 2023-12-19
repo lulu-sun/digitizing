@@ -2,6 +2,7 @@ from new_testament_books import page_starts, books, links, book_chapters, book_f
 from google_cloud import get_page_assignments_as_df, download_docx_from_drive
 from format_text import format_text
 from chap_finder import insert_chapters_from_to_file
+from parse_verse_commentary import parse_and_write_commentary
 from datetime import datetime
 from html_to_docx import convert_html_to_docx
 from html_to_pdf import convert_html_to_pdf
@@ -188,6 +189,11 @@ def consolidate(redownload_docx=False):
     print("Generating final PDF...")
     convert_html_to_pdf(f'{output_dir}/4b_alford-pdf-gen.html', f'{output_dir}/5_alford.pdf')
     copy_and_rename_file(f'{output_dir}/5_alford.pdf', '.', 'New Testament for English Readers - Henry Alford (DRAFT).pdf')
+
+    # 6. Generate Henry Alford verse-by-verse commentaries.
+    print("Parsing commentary by verse sections (for BibleGo)...")
+    parse_and_write_commentary(f'{output_dir}/3_alford-processed-with-verse-tags.html', f'{output_dir}/Henry Alford/')
+
     print("All done!")
 
     print(f"That took {round((time.time() - start_time) / 60, 2)} minutes.")

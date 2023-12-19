@@ -38,7 +38,14 @@ BOOKS = [BibleRange(b) for b in [
         ]]
 
 
-def count_verse_tags(html_file):
+def remove_inserted_tags(html_text):
+    tags_to_remove = ['head', 'div', 'h1', 'h2', 'table']
+    for t in tags_to_remove:
+        html_text = re.sub(fr'<{t}[^>]*?>.*?</{t}>', '', html_text)
+
+    return html_text
+
+def parse_commentary(html_file):
     
     html_text = open(html_file).read()
 
@@ -115,7 +122,7 @@ def count_verse_tags(html_file):
                 if number == current_chapter + 1 and number <= book_chapters[current_book]:
                     current_chapter = number
                     current_verse = 0
-                    # print(f"Current chapter: {current_book} {current_chapter}")
+                    print(f"Current chapter: {current_book} {current_chapter}")
 
                     # Add new page for each chapter
                     # new_page = "class=\"new-page\"" if current_chapter > 1 else ""
@@ -227,7 +234,7 @@ def count_verse_tags(html_file):
         if not commentary[k]:
             empty_keys.append(k)
         else:
-            commentary[k] = '<br><br>'.join(commentary[k])
+            commentary[k] = remove_inserted_tags('<br><br>'.join(commentary[k]))
 
     for k in empty_keys:
         del commentary[k]
@@ -369,11 +376,15 @@ def write_commentary_to_folder(output_folder, commentary):
 
         with open(file_path, 'w') as file:
             file.write(verse_commentary)
-        
+
+
+def parse_and_write_commentary(input_file_path, output_folder_path):
+    commentary = parse_commentary(input_file_path)
+    write_commentary_to_folder(output_folder_path, commentary)
 
 
 if __name__ == '__main__':
-    commentary = count_verse_tags('consolidation/output/3_alford-processed-with-verse-tags.html')
+    commentary = parse_commentary('consolidation/output/3_alford-processed-with-verse-tags.html')
 
     with open('consolidation/output/alford_verse_commentary.txt', 'w') as out_file:
         for k,v in commentary.items():
