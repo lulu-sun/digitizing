@@ -95,4 +95,5 @@ def insert_chapters(html_text):
 
 
 if __name__ == '__main__':
-    insert_chapters_from_to_file('consolidation/output/alford-processed.html', 'consolidation/output/alford-chap-inserted.html')
+    output_dir = f"consolidation/output"
+    insert_chapters_from_to_file(f'{output_dir}/3_alford-processed.html', f'{output_dir}/4_alford-chap-inserted.html')
