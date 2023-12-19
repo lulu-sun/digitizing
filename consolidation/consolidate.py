@@ -166,7 +166,11 @@ def consolidate(redownload_docx=False):
 
     # 3. Run text formatting and space normalization on the html.
     print("Formatting and processing the html file...")
-    process_big_html(f'{output_dir}/2_alford.html', f'{output_dir}/3_alford-processed.html')
+    process_big_html(f'{output_dir}/2_alford.html', f'{output_dir}/3_alford-processed-with-verse-tags.html')
+
+    # 3a. Keep a copy with custom verse tags. Consolidation continues without custom verse tags.
+    remove_custom_verse_tags(f'{output_dir}/3_alford-processed-with-verse-tags.html', f'{output_dir}/3_alford-processed.html')
+    remove_docx_links_for_pdf_gen(f'{output_dir}/3_alford-processed-with-verse-tags.html', f'{output_dir}/3_alford-processed-with-verse-tags.html')
 
     # 4. Parse all book, chapter, verse information into new html.
     print("Inserting chapter markers...")
@@ -259,6 +263,13 @@ def copy_docx_formatting_to_html(text):
         text = re.sub(find, replace, text)
 
     return text
+
+
+def remove_custom_verse_tags(input_file_path, output_file_path):
+    html_text = open(input_file_path).read()
+    html_text = re.sub(r'{\d+}', ' ', html_text)
+    html_text = re.sub(r'  ', ' ', html_text)
+    open(output_file_path, 'w').write(html_text)
 
 
 def process_big_html(input_file_path, output_file_path):
