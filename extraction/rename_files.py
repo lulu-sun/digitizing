@@ -1,8 +1,8 @@
 import os
 
-folder = "extraction/output/pdf_images/Vol 2 Part 2"
-find = "5e0b1c7e-aad4-42b6-bc76-c75bc41094f1"
-replace = "Alford-Vol-2-Part-2"
+folder = "extraction/output/pdf_images/vol-1-part-1"
+find = "32d4e256-aadb-4bc8-b5ca-b7390a05c42d"
+replace = "Alford-Vol-1-Part-1"
 
 # List all files in the directory
 for filename in os.listdir(folder):

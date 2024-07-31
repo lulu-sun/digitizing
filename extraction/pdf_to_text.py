@@ -2,14 +2,15 @@ from pdf2image import convert_from_path
 import os
 from img_to_text import convert_image_to_docx
 
-GENERATE_IMAGES = False
-RUN = 3
+GENERATE_IMAGES = True
+RUN = 4
 
 parts = [
     "Vol 1 Part 1",
     "Vol 1 Part 2",
     "Vol 2 Part 1",
     "Vol 2 Part 2",
+    "vol-1-part-1"
 ]
 
 image_dir = f'extraction/output/pdf_images/{parts[RUN]}'  # Replace with the path to your image directory
@@ -25,7 +26,8 @@ pdf_files = [
     'extraction/pdfs/Vol.I, Part I—New Testament for English Readers, Rivingtons 1868 - Alford.pdf',
     'extraction/pdfs/Vol.I, Part II—New Testament for English Readers, Rivingtons 1872 - Alford.pdf',
     'extraction/pdfs/Vol.II, Part I—New Testament for English Readers, Rivingtons 1872 - Alford.pdf',
-    'extraction/pdfs/Vol.II, Part II—New Testament for English Readers, Rivingtons 1872 - Alford.pdf'
+    'extraction/pdfs/Vol.II, Part II—New Testament for English Readers, Rivingtons 1872 - Alford.pdf',
+    'extraction/pdfs/alfords-greek-nt-vol-1-part-1.pdf'
 ]
 
 pdf_file = pdf_files[RUN]
