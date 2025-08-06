@@ -1,8 +1,8 @@
 from new_testament_books import page_starts, books, links, book_chapters, book_formal_names
-from google_cloud import get_page_assignments_as_df, download_docx_from_drive
+# from google_cloud import get_page_assignments_as_df, download_docx_from_drive
 from format_text import format_text
 from chap_finder import insert_chapters_from_to_file
-from parse_verse_commentary import parse_and_write_commentary
+# from parse_verse_commentary import parse_and_write_commentary
 from datetime import datetime
 from html_to_docx import convert_html_to_docx
 from html_to_pdf import convert_html_to_pdf
@@ -19,8 +19,9 @@ output_dir = f"{working_dir}/output"
 
 xlsx_file = f'{input_dir}/Page Assignments.xlsx'
 
-def get_file_path(volume, part, file_name):
-    return f"{input_dir}/extracted_texts/Vol {volume} Part {part}/{file_name}"
+def get_file_path(num):
+    # filenames in pattern of: extracted_text-1.docx, etc
+    return f"{input_dir}/extracted_texts/extracted_text-{num}.docx"
 
 def run_to_html(run):
     html = run.text
@@ -82,65 +83,51 @@ def get_detailed_progress():
     return counts
 
 
-def get_all_html_from_docx(redownload_docx=False):
-     # remove input folder if redownloding.
-    if redownload_docx and os.path.exists(input_dir):
-        shutil.rmtree(input_dir)
-
-    # Read the Excel file into a DataFrame
-    df = get_page_assignments_as_df()
-    # df = pd.read_excel(xlsx_file)
-    # print(df)
-    completed_count = get_progress(df)
+def get_all_html_from_docx(startNum, endNum):
+   
+    # completed_count = get_progress(df)
     current = 0
 
     all_htmls = {} # key: (volume, part, page)
 
-    for volume, part in [(1,1),(1,2),(2,1),(2,2)]:
-        starting_column = ((volume - 1) * 8 + (part - 1) * 4)
-        dfvp = df.iloc[1:, starting_column:starting_column+3]
-
-        condition = dfvp.iloc[:, 2] == "TRUE"
-
-        dfvp_completed = dfvp[condition]
-
-        for index, row in dfvp_completed.iterrows():
-            current += 1
-            file_name = row[starting_column]            
-            page_number = int(re.search(r'\d+', file_name).group(0))
-            editor = row[starting_column + 1]
-            completed = row[starting_column + 2]
-            docx_file_path = get_file_path(volume, part, file_name)
+    #         current += 1
+    #         file_name = row[starting_column]            
+    #         page_number = int(re.search(r'\d+', file_name).group(0))
+    
+    for num in range(startNum, endNum + 1):
+        docx_file_path = get_file_path(num)
+        print(f"num: {num}, filepath: {docx_file_path}")
             
             # print(f"{current}/{completed_count} Volume {volume} Part {part}", page_number, editor, completed, docx_file_path)
-            print(f"\r{current}/{completed_count}", end="")
+    # print(f"\r{current}/{completed_count}", end="")
 
-            if redownload_docx:
-                download_docx(volume, part, page_number)
+        if not os.path.exists(docx_file_path):
+            print("File not found. You may need to redownload. Skipping.")
+            continue
 
-            if not os.path.exists(docx_file_path):
-                print("File not found. You may need to redownload. Skipping.")
-                continue
-            doc = docx.Document(docx_file_path)
+        doc = docx.Document(docx_file_path)
 
-            htmls = []
+        htmls = []
 
-            for i, paragraph in enumerate(doc.paragraphs):
-                htmls.append('\n')
+        for i, paragraph in enumerate(doc.paragraphs):
+            htmls.append('\n')
 
-                for j, run in enumerate(paragraph.runs):
-                    line = run_to_html(run)
+            for j, run in enumerate(paragraph.runs):
+                line = run_to_html(run)
 
-                    if line.isspace() and i == 0 and j == 0: # empty line at the top is treated as two newline chars.
-                        htmls.append('\n')
-                    
-                    htmls.append(line)
+                if line.isspace() and i == 0 and j == 0: # empty line at the top is treated as two newline chars.
+                    htmls.append('\n')
+                
+                htmls.append(line)
+        print(htmls)
 
-            # if volume == 1 and part == 1 and page_number == 228:
-            #     print(htmls)
-            #     input()
+        break
 
-            all_htmls[(volume, part, page_number)] = ''.join(htmls)
+        # if volume == 1 and part == 1 and page_number == 228:
+        #     print(htmls)
+        #     input()
+
+        # all_htmls[(volume, part, page_number)] = ''.join(htmls)
 
     print()
     
@@ -153,17 +140,18 @@ def get_all_html_from_docx(redownload_docx=False):
 # 3. Run text formatting and space normalization on the big html.
 # 4. Parse all book, chapter, verse information into new html.
 # 5. Write everything to a nice formatted PDF.
-def consolidate(redownload_docx=False):
+def consolidate():
     start_time = time.time()
 
     # 1. Compile and convert all docx into various html files.
-    print(f"Converting each docx file into an html file (redownload_docx={redownload_docx})...")
-    convert_docx_to_html(redownload_docx)
+    print(f"Converting each docx file into an html file ...")
+    convert_docx_to_html()
     print(f"Done.")
 
     # 2. Combine all html into single big html file.
-    print("Combining html files into one html file...")
-    consolidate_html(f'{output_dir}/2_alford.html')
+    # print("Combining html files into one html file...")
+    # consolidate_html(f'{output_dir}/2_alford.html')
+    breakpoint
 
     # 3. Run text formatting and space normalization on the html.
     print("Formatting and processing the html file...")
@@ -228,13 +216,15 @@ def copy_and_rename_file(source_path, destination_directory, new_filename):
 #     convert_html_to_docx(f'{output_dir}/alford-processed.html', f'{output_dir}/alford-processed.docx')
 
 
-def convert_docx_to_html(redownload_docx=False):
+def convert_docx_to_html():
     # remove html output files
     html_output_folder = f'{output_dir}/html'
     if os.path.exists(html_output_folder):
         shutil.rmtree(html_output_folder)
 
-    all_htmls = get_all_html_from_docx(redownload_docx)
+    all_htmls = get_all_html_from_docx(8, 634)
+
+    exit
 
     for volume, part, page in all_htmls.keys():
         html_text = all_htmls[(volume, part, page)]
@@ -478,4 +468,4 @@ if __name__ == '__main__':
     # get_detailed_progress()
 
     # New Consolidation:
-    consolidate(redownload_docx=ask_yn("Redownload all docx?"))
+    consolidate()
